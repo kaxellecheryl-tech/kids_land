@@ -1,0 +1,260 @@
+// Prisma schema — Kids Land
+// Modèle de données pour boutique de vêtements enfants
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────── USERS ─────────────
+// L'auth est gérée par Supabase. On stocke ici les infos métier liées à l'utilisateur.
+
+model User {
+  id        String   @id @default(uuid()) // doit matcher l'auth.users.id Supabase
+  email     String   @unique
+  fullName  String?
+  phone     String?
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  city      String
+  district  String   // Ex: "Cocody", "Yopougon"
+  street    String?  // Précisions (rue, immeuble, étage)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  orders Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ───────────── CATALOG ─────────────
+
+model Category {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  name        String
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      Category? @relation("Subcategories", fields: [parentId], references: [id])
+  children    Category[] @relation("Subcategories")
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  slug      String    @unique
+  name      String
+  logoUrl   String?
+  createdAt DateTime  @default(now())
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?  @db.Text
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  brandId     String?
+  brand       Brand?   @relation(fields: [brandId], references: [id])
+  basePrice   Int      // En F CFA (entier, pas de décimales)
+  comparePrice Int?    // Prix barré (avant promo)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  ageRangeMin Int?     // En mois (24 = 2 ans)
+  ageRangeMax Int?
+  gender      Gender   @default(UNISEX)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  variants ProductVariant[]
+  images   ProductImage[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isActive])
+  @@map("products")
+}
+
+enum Gender {
+  GIRL
+  BOY
+  UNISEX
+}
+
+model ProductVariant {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String   // "2 ans", "4 ans", "S", "M"...
+  color     String?
+  sku       String   @unique
+  stock     Int      @default(0)
+  priceOverride Int? // Si variant a un prix différent du basePrice
+
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  position  Int     @default(0)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ───────────── ORDERS ─────────────
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique // Format: KL-2026-00001
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  guestEmail    String?     // Pour les achats sans compte
+  guestPhone    String?
+  addressId     String?
+  address       Address?    @relation(fields: [addressId], references: [id])
+  // Snapshot adresse (au cas où l'utilisateur la modifie après commande)
+  shippingFullName String
+  shippingPhone    String
+  shippingCity     String
+  shippingDistrict String
+  shippingStreet   String?
+
+  status        OrderStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?     // 'wave', 'orange_money', 'mtn', 'card'...
+  paymentRef    String?     // Référence transaction PayDunya
+
+  subtotal      Int         // Total articles
+  shippingFee   Int         @default(0)
+  discount      Int         @default(0)
+  total         Int
+
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING        // En attente de paiement
+  PAID           // Payé, à préparer
+  PROCESSING     // En préparation
+  SHIPPED        // Expédié
+  DELIVERED      // Livré
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id         String         @id @default(uuid())
+  orderId    String
+  order      Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product        @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  // Snapshots (le produit peut changer après commande)
+  productName  String
+  productImage String?
+  variantLabel String?       // "Taille 4 ans / Bleu"
+  unitPrice    Int
+  quantity     Int
+  subtotal     Int
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ───────────── SHIPPING ─────────────
+
+model ShippingZone {
+  id        String   @id @default(uuid())
+  name      String   // "Abidjan", "Intérieur", "Sous-région"
+  fee       Int      // Tarif en F CFA
+  isActive  Boolean  @default(true)
+  cities    String[] // Liste des villes couvertes
+  createdAt DateTime @default(now())
+
+  @@map("shipping_zones")
+}
+
+// ───────────── PROMO ─────────────
+
+model Coupon {
+  id           String      @id @default(uuid())
+  code         String      @unique
+  description  String?
+  discountType DiscountType
+  discountValue Int        // % ou F CFA selon le type
+  minSubtotal  Int?        // Montant minimum panier
+  maxUses      Int?        // null = illimité
+  usedCount    Int         @default(0)
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  @@map("coupons")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
