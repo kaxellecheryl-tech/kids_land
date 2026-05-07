@@ -27,6 +27,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [authUser, setAuthUser] = useState<SupabaseUser | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -34,8 +35,10 @@ export function Header() {
     setMounted(true);
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setAuthUser(data.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_, session) => setAuthUser(session?.user ?? null)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, session) =>
+      setAuthUser(session?.user ?? null)
     );
     return () => subscription.unsubscribe();
   }, []);
@@ -51,6 +54,15 @@ export function Header() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 10);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   function isActive(href: string) {
     const [path, qs] = href.split("?");
     if (pathname !== path) return false;
@@ -64,97 +76,110 @@ export function Header() {
 
   return (
     <>
-    <nav className="fixed top-0 inset-x-0 z-50 h-[96px] bg-white/95 backdrop-blur-md border-b-2 border-brand-blue-light">
-      <div className="container-shop h-full flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/">
-          <Image
-            src="/LOGO.png"
-            alt="Kids Land"
-            width={300}
-            height={120}
-            className="h-24 w-auto object-contain"
-            priority
-          />
-        </Link>
-
-        {/* Nav links — hidden on mobile */}
-        <ul className="hidden lg:flex items-center gap-9 list-none">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={`text-[13px] font-medium uppercase tracking-wider transition-colors ${
-                  isActive(link.href)
-                    ? "text-black border-b-2 border-brand-orange pb-0.5"
-                    : "text-gray-600 hover:text-black"
-                }`}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          <button
-            aria-label="Rechercher"
-            onClick={() => setSearchOpen(true)}
-            className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
-          >
-            <Search size={16} />
-          </button>
-
-          {/* Account / login */}
-          <Link
-            href={accountHref}
-            aria-label={accountLabel}
-            className="relative hidden sm:flex w-10 h-10 rounded-full border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
-          >
-            {mounted && authUser ? (
-              <span className="w-5 h-5 rounded-full bg-brand-orange text-white text-[10px] font-black flex items-center justify-center">
-                {(authUser.user_metadata?.full_name as string | undefined ?? authUser.email ?? "?")
-                  .charAt(0)
-                  .toUpperCase()}
-              </span>
-            ) : (
-              <User size={16} />
-            )}
+      <nav
+        className={`fixed top-0 inset-x-0 z-50 h-[96px] transition-all duration-300 ${
+          scrolled
+            ? "bg-white shadow-[0_2px_24px_rgba(0,0,0,0.07)]"
+            : "bg-white/95 backdrop-blur-md border-b border-brand-blue-light/40"
+        }`}
+      >
+        <div className="container-shop h-full flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/">
+            <Image
+              src="/LOGO.png"
+              alt="Kids Land"
+              width={300}
+              height={120}
+              className="h-24 w-auto object-contain"
+              priority
+            />
           </Link>
 
-          {/* Wishlist */}
-          <Link
-            href="/wishlist"
-            aria-label="Favoris"
-            className="hidden sm:relative sm:flex w-10 h-10 rounded-full border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
-          >
-            <Heart size={16} />
-            {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
+          {/* Nav links — hidden on mobile */}
+          <ul className="hidden lg:flex items-center gap-9 list-none">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`relative text-[13px] font-medium uppercase tracking-wider transition-colors duration-200 pb-0.5
+                    after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-brand-orange after:transition-all after:duration-200
+                    ${
+                      isActive(link.href)
+                        ? "text-black after:w-full"
+                        : "text-gray-600 hover:text-black after:w-0 hover:after:w-full"
+                    }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-          {/* Cart */}
-          <button
-            onClick={openCart}
-            aria-label="Panier"
-            className="relative w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
-          >
-            <ShoppingBag size={16} />
-            {mounted && totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {totalItems}
-              </span>
-            )}
-          </button>
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <button
+              aria-label="Rechercher"
+              onClick={() => setSearchOpen(true)}
+              className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+            >
+              <Search size={16} />
+            </button>
+
+            {/* Account / login */}
+            <Link
+              href={accountHref}
+              aria-label={accountLabel}
+              className="relative hidden sm:flex w-10 h-10 rounded-xl border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+            >
+              {mounted && authUser ? (
+                <span className="w-7 h-7 rounded-lg bg-brand-orange text-white text-[11px] font-black flex items-center justify-center">
+                  {(
+                    authUser.user_metadata?.full_name as string | undefined ??
+                    authUser.email ??
+                    "?"
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              ) : (
+                <User size={16} />
+              )}
+            </Link>
+
+            {/* Wishlist */}
+            <Link
+              href="/wishlist"
+              aria-label="Favoris"
+              className="hidden sm:relative sm:flex w-10 h-10 rounded-xl border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+            >
+              <Heart size={16} />
+              {mounted && wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart */}
+            <button
+              onClick={openCart}
+              aria-label="Panier"
+              className="relative w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+            >
+              <ShoppingBag size={16} />
+              {mounted && totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
 
-    {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
+      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
     </>
   );
 }

@@ -213,7 +213,7 @@ export default async function HomePage() {
     <>
       {/* HERO */}
       <section className="grid lg:grid-cols-2 min-h-[calc(100vh-68px)]">
-        <div className="bg-white border-r-4 border-brand-blue-light flex flex-col justify-center px-12 lg:px-16 py-20">
+        <div className="bg-white border-r border-gray-100 flex flex-col justify-center px-12 lg:px-16 py-20">
           <span className="inline-flex items-center gap-2 bg-brand-blue-light text-brand-blue-dark text-[11px] font-bold tracking-[2px] uppercase px-4 py-1.5 rounded-full w-fit mb-7">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
             Nouvelle collection printemps
@@ -321,10 +321,12 @@ export default async function HomePage() {
             <Link
               key={cat.slug}
               href={`/products?category=${cat.slug}`}
-              className="rounded-md p-7 text-center transition-transform hover:-translate-y-0.5"
+              className="rounded-[20px] p-7 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
               style={{ backgroundColor: cat.bg }}
             >
-              <div className="flex justify-center mb-3"><cat.Icon size={32} /></div>
+              <div className="w-12 h-12 rounded-xl bg-white/40 flex items-center justify-center mx-auto mb-4">
+                <cat.Icon size={24} />
+              </div>
               <div className="text-[13px] font-bold tracking-wide mb-1">
                 {cat.name}
               </div>
@@ -396,21 +398,23 @@ export default async function HomePage() {
       </section>
 
       {/* BRANDS */}
-      <section className="container-shop py-20">
-        <SectionHeader
-          title="Nos marques"
-          subtitle="Sélection premium des meilleures marques internationales"
-        />
-        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-          {BRANDS.map((brand) => (
-            <Link
-              key={brand.slug}
-              href={`/brands/${brand.slug}`}
-              className="bg-[#FDF8F8] border border-gray-100 rounded-sm px-6 py-3.5 text-[13px] font-bold tracking-wide uppercase text-gray-600 hover:bg-brand-blue-dark hover:text-white hover:border-brand-blue-dark transition-colors whitespace-nowrap"
-            >
-              {brand.name}
-            </Link>
-          ))}
+      <section className="bg-white border-b border-gray-100 py-20">
+        <div className="container-shop">
+          <SectionHeader
+            title="Nos marques"
+            subtitle="Sélection premium des meilleures marques internationales"
+          />
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
+            {BRANDS.map((brand) => (
+              <Link
+                key={brand.slug}
+                href={`/brands/${brand.slug}`}
+                className="bg-white border border-gray-200 rounded-full px-6 py-3.5 text-[13px] font-bold tracking-wide uppercase text-gray-600 hover:border-brand-blue-dark hover:bg-brand-blue-dark hover:text-white transition-colors whitespace-nowrap"
+              >
+                {brand.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -422,15 +426,15 @@ export default async function HomePage() {
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="bg-white rounded-md border border-gray-100 p-7"
+                className="bg-white rounded-[20px] border border-gray-100 p-8"
               >
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
                   style={{ backgroundColor: f.bg }}
                 >
                   <f.Icon size={22} />
                 </div>
-                <h3 className="text-[14px] font-bold mb-2">{f.title}</h3>
+                <h3 className="text-[15px] font-bold mb-2">{f.title}</h3>
                 <p className="text-[13px] text-gray-600 leading-relaxed">
                   {f.desc}
                 </p>
@@ -488,7 +492,8 @@ function SectionHeader({
   return (
     <div className="flex items-end justify-between mb-12">
       <div>
-        <h2 className="text-4xl font-bold tracking-tight">{title}</h2>
+        <span className="block w-10 h-1 rounded-full bg-brand-orange mb-3" />
+        <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
         {subtitle && (
           <p className="text-sm text-gray-600 mt-1.5">{subtitle}</p>
         )}
@@ -522,7 +527,7 @@ function ShowcaseCard({
 }) {
   return (
     <div
-      className={`bg-white rounded-md overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 shadow-card ${
+      className={`bg-white rounded-[16px] overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 shadow-card ${
         tall ? "row-span-2" : ""
       }`}
     >
@@ -544,11 +549,11 @@ function ShowcaseCard({
           <Shirt size={40} className="text-gray-400" />
         )}
       </div>
-      <div className="px-3.5 py-3">
+      <div className="px-4 py-3.5">
         <div className="text-[9px] font-bold tracking-[1.5px] uppercase text-gray-500">
           {brand}
         </div>
-        <div className="text-xs font-semibold mb-1.5 leading-snug">{name}</div>
+        <div className="text-[13px] font-semibold mb-1.5 leading-snug">{name}</div>
         <div className="text-[13px] font-bold">{price}</div>
       </div>
     </div>
