@@ -12,13 +12,13 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, options as never)
           );
         },
       },
@@ -30,16 +30,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protection des routes /account et /admin
   const url = request.nextUrl.clone();
+  const { pathname } = url;
 
-  if (url.pathname.startsWith("/account") && !user) {
+  const protectedPaths = ["/account", "/checkout", "/orders/track"];
+  const requiresAuth = protectedPaths.some((p) => pathname.startsWith(p));
+
+  if (requiresAuth && !user) {
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
-  if (url.pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin")) {
     if (!user) {
       url.pathname = "/login";
       return NextResponse.redirect(url);

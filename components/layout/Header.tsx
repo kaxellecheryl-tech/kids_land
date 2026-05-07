@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, Heart, ShoppingBag } from "lucide-react";
+import { Search, Heart, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { useWishlist } from "@/lib/wishlist-store";
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { SearchModal } from "@/components/shop/SearchModal";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const NAV_LINKS = [
   { href: "/products?filter=new", label: "Nouveautés" },
@@ -24,10 +26,19 @@ export function Header() {
   const wishlistCount = useWishlist((s) => s.count());
   const [mounted, setMounted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [authUser, setAuthUser] = useState<SupabaseUser | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setAuthUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_, session) => setAuthUser(session?.user ?? null)
+    );
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -47,6 +58,9 @@ export function Header() {
     const [key, val] = qs.split("=");
     return searchParams.get(key) === val;
   }
+
+  const accountHref = authUser ? "/account" : "/login";
+  const accountLabel = authUser ? "Mon compte" : "Se connecter";
 
   return (
     <>
@@ -91,6 +105,25 @@ export function Header() {
           >
             <Search size={16} />
           </button>
+
+          {/* Account / login */}
+          <Link
+            href={accountHref}
+            aria-label={accountLabel}
+            className="relative hidden sm:flex w-10 h-10 rounded-full border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+          >
+            {mounted && authUser ? (
+              <span className="w-5 h-5 rounded-full bg-brand-orange text-white text-[10px] font-black flex items-center justify-center">
+                {(authUser.user_metadata?.full_name as string | undefined ?? authUser.email ?? "?")
+                  .charAt(0)
+                  .toUpperCase()}
+              </span>
+            ) : (
+              <User size={16} />
+            )}
+          </Link>
+
+          {/* Wishlist */}
           <Link
             href="/wishlist"
             aria-label="Favoris"
@@ -103,6 +136,8 @@ export function Header() {
               </span>
             )}
           </Link>
+
+          {/* Cart */}
           <button
             onClick={openCart}
             aria-label="Panier"

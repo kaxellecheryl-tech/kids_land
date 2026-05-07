@@ -1,0 +1,467 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import {
+  Heart, ShoppingBag, Check, ChevronLeft, ChevronRight,
+  Truck, RotateCcw, ShieldCheck, Minus, Plus, Shirt,
+} from "lucide-react";
+import { useState } from "react";
+import { useCart } from "@/lib/cart-store";
+import { useWishlist } from "@/lib/wishlist-store";
+import { formatPrice, formatAge, cn } from "@/lib/utils";
+
+export type ProductFull = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  brand: { name: string; slug: string } | null;
+  category: { name: string; slug: string };
+  basePrice: number;
+  comparePrice: number | null;
+  ageRangeMin: number | null;
+  ageRangeMax: number | null;
+  gender: string;
+  images: { url: string; alt: string | null }[];
+  variants: {
+    id: string;
+    size: string;
+    color: string | null;
+    stock: number;
+    priceOverride: number | null;
+    sku: string;
+  }[];
+};
+
+const GENDER_LABEL: Record<string, string | null> = {
+  GIRL: "Fille",
+  BOY: "Garçon",
+  UNISEX: null,
+};
+
+const DELIVERY_PERKS = [
+  { Icon: Truck,       text: "Livraison 24–48h à Abidjan"      },
+  { Icon: RotateCcw,   text: "Retours gratuits sous 30 jours"  },
+  { Icon: ShieldCheck, text: "Article 100 % authentique"        },
+];
+
+export function ProductDetail({ product }: { product: ProductFull }) {
+  const addItem   = useCart((s) => s.addItem);
+  const openCart  = useCart((s) => s.open);
+  const toggleWL  = useWishlist((s) => s.toggle);
+  const isFav     = useWishlist((s) => s.has(product.id));
+
+  const [activeImg, setActiveImg]     = useState(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [quantity, setQuantity]         = useState(1);
+  const [justAdded, setJustAdded]       = useState(false);
+  const [imgErrors, setImgErrors]       = useState<Record<number, boolean>>({});
+
+  // ── Variant logic ──────────────────────────────────────────────
+  const sizeGroups = new Map<string, typeof product.variants>();
+  for (const v of product.variants) {
+    if (!sizeGroups.has(v.size)) sizeGroups.set(v.size, []);
+    sizeGroups.get(v.size)!.push(v);
+  }
+  const allSizes = [...sizeGroups.keys()];
+  const hasColors = product.variants.some((v) => v.color);
+
+  const colorsForSize: { color: string; stock: number }[] = selectedSize
+    ? (sizeGroups.get(selectedSize) ?? [])
+        .filter((v) => v.color)
+        .map((v) => ({ color: v.color!, stock: v.stock }))
+    : [];
+
+  const selectedVariant =
+    selectedSize !== null
+      ? (sizeGroups.get(selectedSize) ?? []).find(
+          (v) => !hasColors || v.color === selectedColor
+        ) ?? null
+      : null;
+
+  const price = selectedVariant?.priceOverride ?? product.basePrice;
+
+  const hasVariants = allSizes.length > 0;
+  const sizeSelected = !hasVariants || selectedSize !== null;
+  const colorSelected = !hasColors || selectedColor !== null;
+  const canAdd = sizeSelected && colorSelected;
+
+  function handleSizeClick(size: string) {
+    setSelectedSize(size);
+    const variants = sizeGroups.get(size) ?? [];
+    if (variants.length === 1 || !hasColors) {
+      setSelectedColor(variants[0]?.color ?? null);
+    } else {
+      setSelectedColor(null);
+    }
+  }
+
+  function handleAddToCart() {
+    if (!canAdd) return;
+    addItem(
+      {
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        slug: product.slug,
+        name: product.name,
+        brand: product.brand?.name ?? "Kids Land",
+        image: product.images[0]?.url ?? "",
+        size: selectedVariant?.size ?? undefined,
+        color: selectedVariant?.color ?? undefined,
+        unitPrice: price,
+      },
+      quantity
+    );
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
+    setTimeout(() => openCart(), 400);
+  }
+
+  // ── Discount ──────────────────────────────────────────────────
+  const discount =
+    product.comparePrice && product.comparePrice > product.basePrice
+      ? Math.round(
+          ((product.comparePrice - product.basePrice) / product.comparePrice) * 100
+        )
+      : 0;
+
+  // ── Age label ─────────────────────────────────────────────────
+  const ageLabel =
+    product.ageRangeMin !== null && product.ageRangeMax !== null
+      ? `${formatAge(product.ageRangeMin)} – ${formatAge(product.ageRangeMax)}`
+      : product.ageRangeMin !== null
+      ? `Dès ${formatAge(product.ageRangeMin)}`
+      : null;
+
+  const genderLabel = GENDER_LABEL[product.gender] ?? null;
+
+  // ── Stock info ────────────────────────────────────────────────
+  const variantStock = selectedVariant?.stock ?? null;
+  const isOutOfStock = selectedVariant ? selectedVariant.stock === 0 : false;
+  const isLowStock = variantStock !== null && variantStock > 0 && variantStock <= 5;
+
+  // ── Image navigation ──────────────────────────────────────────
+  const images = product.images;
+  const prevImg = () => setActiveImg((i) => (i - 1 + images.length) % images.length);
+  const nextImg = () => setActiveImg((i) => (i + 1) % images.length);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 items-start">
+      {/* ── Gallery ──────────────────────────────────────────── */}
+      <div className="space-y-3 lg:sticky lg:top-28">
+        {/* Main image */}
+        <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#F6E5E5] flex items-center justify-center">
+          {images.length > 0 && !imgErrors[activeImg] ? (
+            <Image
+              key={activeImg}
+              src={images[activeImg].url}
+              alt={images[activeImg].alt ?? product.name}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              priority
+              onError={() => setImgErrors((e) => ({ ...e, [activeImg]: true }))}
+            />
+          ) : (
+            <Shirt size={64} className="text-gray-200" />
+          )}
+
+          {/* Nav arrows (only if > 1 image) */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={prevImg}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow hover:bg-white transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={nextImg}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow hover:bg-white transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+
+          {/* Discount badge */}
+          {discount > 0 && (
+            <span className="absolute top-4 left-4 bg-brand-orange text-white text-[11px] font-black px-3 py-1 rounded-full">
+              −{discount}%
+            </span>
+          )}
+        </div>
+
+        {/* Thumbnails */}
+        {images.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveImg(i)}
+                className={cn(
+                  "shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all",
+                  activeImg === i ? "border-brand-orange" : "border-gray-100 hover:border-gray-300"
+                )}
+              >
+                {!imgErrors[i] ? (
+                  <Image
+                    src={img.url}
+                    alt={img.alt ?? ""}
+                    width={64}
+                    height={64}
+                    className="object-cover w-full h-full"
+                    onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#F6E5E5] flex items-center justify-center">
+                    <Shirt size={20} className="text-gray-200" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Product info ──────────────────────────────────────── */}
+      <div className="space-y-6">
+        {/* Brand */}
+        {product.brand && (
+          <Link
+            href={`/brands/${product.brand.slug}`}
+            className="inline-block text-[11px] font-black uppercase tracking-[2px] text-gray-400 hover:text-brand-orange transition-colors"
+          >
+            {product.brand.name}
+          </Link>
+        )}
+
+        {/* Name */}
+        <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
+          {product.name}
+        </h1>
+
+        {/* Badges */}
+        {(ageLabel || genderLabel) && (
+          <div className="flex flex-wrap gap-2">
+            {ageLabel && (
+              <span className="px-3 py-1 rounded-full bg-[#fff3bb] text-[12px] font-bold">
+                {ageLabel}
+              </span>
+            )}
+            {genderLabel && (
+              <span className="px-3 py-1 rounded-full bg-[#F6E5E5] text-[12px] font-bold">
+                {genderLabel}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Price */}
+        <div className="flex items-baseline gap-3">
+          <span className="text-3xl font-bold tracking-tight">
+            {formatPrice(price)}
+          </span>
+          {product.comparePrice && product.comparePrice > product.basePrice && (
+            <span className="text-lg text-gray-400 line-through">
+              {formatPrice(product.comparePrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Size selector */}
+        {allSizes.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-gray-600">
+                Taille
+                {selectedSize && (
+                  <span className="ml-2 text-black normal-case tracking-normal">
+                    — {selectedSize}
+                  </span>
+                )}
+              </span>
+              <button className="text-[12px] text-brand-orange font-medium hover:underline">
+                Guide des tailles
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {allSizes.map((size) => {
+                const variants = sizeGroups.get(size) ?? [];
+                const totalStock = variants.reduce((s, v) => s + v.stock, 0);
+                const outOfStock = totalStock === 0;
+                return (
+                  <button
+                    key={size}
+                    disabled={outOfStock}
+                    onClick={() => handleSizeClick(size)}
+                    className={cn(
+                      "min-w-[48px] px-4 py-2.5 rounded-xl text-[13px] font-semibold border-2 transition-all",
+                      outOfStock
+                        ? "border-gray-100 text-gray-300 bg-gray-50 line-through cursor-not-allowed"
+                        : selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 text-gray-700 hover:border-gray-400"
+                    )}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Color selector */}
+        {hasColors && colorsForSize.length > 0 && (
+          <div>
+            <div className="text-[12px] font-bold uppercase tracking-widest text-gray-600 mb-3">
+              Couleur
+              {selectedColor && (
+                <span className="ml-2 text-black normal-case tracking-normal">
+                  — {selectedColor}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {colorsForSize.map(({ color, stock }) => (
+                <button
+                  key={color}
+                  disabled={stock === 0}
+                  onClick={() => setSelectedColor(color)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-[13px] font-semibold border-2 transition-all",
+                    stock === 0
+                      ? "border-gray-100 text-gray-300 bg-gray-50 line-through cursor-not-allowed"
+                      : selectedColor === color
+                      ? "border-black bg-black text-white"
+                      : "border-gray-200 text-gray-700 hover:border-gray-400"
+                  )}
+                >
+                  {color}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Stock feedback */}
+        {isOutOfStock && selectedVariant && (
+          <p className="text-sm text-red-500 font-medium">
+            Rupture de stock pour cette taille.
+          </p>
+        )}
+        {isLowStock && !isOutOfStock && (
+          <p className="text-sm text-brand-orange font-medium">
+            Plus que {variantStock} en stock !
+          </p>
+        )}
+
+        {/* Quantity + add to cart */}
+        <div className="flex items-center gap-3">
+          {/* Qty */}
+          <div className="flex items-center gap-0 border border-gray-200 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="w-9 text-center text-sm font-bold">{quantity}</span>
+            <button
+              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+              className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+
+          {/* Add to cart */}
+          <button
+            onClick={handleAddToCart}
+            disabled={!canAdd || isOutOfStock}
+            className={cn(
+              "flex-1 h-11 rounded-xl text-[13px] font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all",
+              justAdded
+                ? "bg-[#7ED957] text-white"
+                : canAdd && !isOutOfStock
+                ? "bg-black text-white hover:bg-brand-orange"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            )}
+          >
+            {justAdded ? (
+              <>
+                <Check size={15} /> Ajouté !
+              </>
+            ) : !sizeSelected ? (
+              <>
+                <ShoppingBag size={15} /> Choisir une taille
+              </>
+            ) : isOutOfStock ? (
+              "Indisponible"
+            ) : (
+              <>
+                <ShoppingBag size={15} /> Ajouter au panier
+              </>
+            )}
+          </button>
+
+          {/* Wishlist */}
+          <button
+            onClick={() =>
+              toggleWL({
+                productId: product.id,
+                slug: product.slug,
+                name: product.name,
+                brand: product.brand?.name ?? "Kids Land",
+                image: product.images[0]?.url ?? "",
+                basePrice: product.basePrice,
+                comparePrice: product.comparePrice,
+              })
+            }
+            aria-label="Ajouter aux favoris"
+            className={cn(
+              "w-11 h-11 rounded-xl border-2 flex items-center justify-center transition-all",
+              isFav
+                ? "border-brand-orange bg-brand-orange text-white"
+                : "border-gray-200 text-gray-600 hover:border-brand-orange hover:text-brand-orange"
+            )}
+          >
+            <Heart size={16} className={isFav ? "fill-white" : ""} />
+          </button>
+        </div>
+
+        {/* Delivery perks */}
+        <div className="rounded-xl bg-[#FDF8F8] border border-gray-100 divide-y divide-gray-100">
+          {DELIVERY_PERKS.map(({ Icon, text }) => (
+            <div key={text} className="flex items-center gap-3 px-4 py-3">
+              <Icon size={15} className="text-gray-400 shrink-0" />
+              <span className="text-[13px] text-gray-600">{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Description */}
+        {product.description && (
+          <div>
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+              Description
+            </h2>
+            <p className="text-[14px] text-gray-600 leading-relaxed whitespace-pre-line">
+              {product.description}
+            </p>
+          </div>
+        )}
+
+        {/* SKU */}
+        {selectedVariant && (
+          <p className="text-[11px] text-gray-400">
+            Réf. : {selectedVariant.sku}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
