@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, UserPlus, RefreshCcw, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { createUserRecord } from "@/app/actions/auth";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
@@ -164,5 +164,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-md h-[520px] rounded-2xl bg-white animate-pulse" />}>
+      <RegisterForm />
+    </Suspense>
   );
 }

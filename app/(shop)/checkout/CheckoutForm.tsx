@@ -6,18 +6,12 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag, Shirt, MapPin, Phone, User, FileText,
-  Truck, RefreshCcw, AlertCircle, ChevronRight, Check,
+  Truck, RefreshCcw, AlertCircle, ChevronRight,
 } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
 import { createOrder, type CheckoutInput } from "@/app/actions/checkout";
 
-const PAYMENT_METHODS = [
-  { id: "wave",         label: "Wave",           color: "#0080FF", textColor: "white" },
-  { id: "orange_money", label: "Orange Money",   color: "#FF6600", textColor: "white" },
-  { id: "mtn",          label: "MTN Money",      color: "#FFD21F", textColor: "black" },
-  { id: "card",         label: "Carte bancaire", color: "#1a1a1a", textColor: "white" },
-];
 
 const CITIES_CI = [
   "Abidjan", "Bouaké", "Yamoussoukro", "Daloa", "Korhogo",
@@ -50,7 +44,6 @@ export function CheckoutForm({
   const [district, setDistrict]   = useState("");
   const [street, setStreet]       = useState("");
   const [notes, setNotes]         = useState("");
-  const [paymentMethod, setPM]    = useState("wave");
   const [error, setError]         = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -89,7 +82,6 @@ export function CheckoutForm({
       subtotal,
       shippingFee: fee,
       total,
-      paymentMethod,
     };
 
     startTransition(async () => {
@@ -347,40 +339,22 @@ export function CheckoutForm({
             </div>
           </div>
 
-          {/* Payment method */}
+          {/* Payment — Wave */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
               Mode de paiement
             </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {PAYMENT_METHODS.map((pm) => (
-                <button
-                  key={pm.id}
-                  type="button"
-                  onClick={() => setPM(pm.id)}
-                  className={cn(
-                    "relative py-3 px-3 rounded-xl border-2 text-[12px] font-bold transition-all",
-                    paymentMethod === pm.id
-                      ? "border-transparent"
-                      : "border-gray-200 hover:border-gray-300"
-                  )}
-                  style={
-                    paymentMethod === pm.id
-                      ? { backgroundColor: pm.color, color: pm.textColor, borderColor: pm.color }
-                      : undefined
-                  }
-                >
-                  {paymentMethod === pm.id && (
-                    <span className="absolute top-1.5 right-1.5">
-                      <Check size={10} />
-                    </span>
-                  )}
-                  {pm.label}
-                </button>
-              ))}
+            <div className="flex items-center gap-3 bg-[#0080FF]/8 border-2 border-[#0080FF] rounded-xl px-4 py-3.5">
+              <div className="w-8 h-8 rounded-lg bg-[#0080FF] flex items-center justify-center shrink-0">
+                <span className="text-white text-[10px] font-black">W</span>
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-[#0080FF]">Wave</p>
+                <p className="text-[11px] text-gray-500">Mobile Money — Côte d&apos;Ivoire</p>
+              </div>
             </div>
             <p className="text-[11px] text-gray-400 mt-3">
-              Paiement sécurisé via PayDunya. Vos données ne sont jamais stockées.
+              Vous serez redirigé vers Wave pour finaliser le paiement en toute sécurité.
             </p>
           </div>
 

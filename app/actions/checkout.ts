@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { createInvoice } from "@/lib/paydunya";
+import { createCheckoutSession } from "@/lib/wave";
 import { generateOrderNumber } from "@/lib/utils";
 
 export type CheckoutItem = {
@@ -30,7 +30,6 @@ export type CheckoutInput = {
   subtotal: number;
   shippingFee: number;
   total: number;
-  paymentMethod: string;
 };
 
 export type CheckoutResult =
@@ -39,13 +38,18 @@ export type CheckoutResult =
 
 export async function createOrder(input: CheckoutInput): Promise<CheckoutResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Vous devez être connecté pour passer commande." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return { ok: false, error: "Vous devez être connecté pour passer commande." };
 
   if (!input.items.length) return { ok: false, error: "Votre panier est vide." };
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
   try {
-    // Génère un numéro de commande unique
+    // Numéro de commande unique
     const lastOrder = await (prisma as any).order.findFirst({
       orderBy: { createdAt: "desc" },
       select: { orderNumber: true },
@@ -55,14 +59,14 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
       : 0;
     const orderNumber = generateOrderNumber(lastSeq + 1);
 
-    // Crée la commande en base
+    // Création de la commande en base (PENDING en attendant le paiement Wave)
     const order = await (prisma as any).order.create({
       data: {
         orderNumber,
         userId: user.id,
         status: "PENDING",
         paymentStatus: "PENDING",
-        paymentMethod: input.paymentMethod,
+        paymentMethod: "wave",
         shippingFullName: input.shipping.fullName,
         shippingPhone: input.shipping.phone,
         shippingCity: input.shipping.city,
@@ -89,40 +93,24 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
       },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    // Création de la session Wave
+    const session = await createCheckoutSession({
+      amount: input.total,
+      successUrl: `${appUrl}/checkout/success?order=${orderNumber}`,
+      errorUrl: `${appUrl}/checkout?error=payment_failed`,
+      // clientReference = order.id pour identifier la commande dans le webhook
+      clientReference: order.id,
+    });
 
-    // Tente de créer une facture PayDunya
-    try {
-      const invoice = await createInvoice({
-        total_amount: input.total,
-        description: `Commande Kids Land ${orderNumber}`,
-        return_url: `${appUrl}/checkout/success?order=${orderNumber}`,
-        cancel_url: `${appUrl}/checkout`,
-        callback_url: `${appUrl}/api/paydunya/webhook`,
-        custom_data: { order_id: order.id, order_number: orderNumber },
-        items: input.items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          total_price: item.unitPrice * item.quantity,
-        })),
-      });
-
-      if (invoice.response_code === "00" && invoice.invoice_url) {
-        return { ok: true, orderNumber, paymentUrl: invoice.invoice_url };
-      }
-    } catch {
-      // PayDunya non configuré ou erreur réseau → fallback vers page de succès
-    }
-
-    // Fallback : rediriger vers la page de succès sans paiement externe
-    return {
-      ok: true,
-      orderNumber,
-      paymentUrl: `${appUrl}/checkout/success?order=${orderNumber}`,
-    };
+    return { ok: true, orderNumber, paymentUrl: session.wave_launch_url };
   } catch (err) {
     console.error("createOrder error:", err);
-    return { ok: false, error: "Une erreur est survenue. Réessayez dans un instant." };
+    const msg = err instanceof Error ? err.message : "Erreur inconnue";
+    return {
+      ok: false,
+      error: msg.includes("WAVE_API_KEY")
+        ? "Le paiement Wave n'est pas encore configuré. Contactez-nous."
+        : "Une erreur est survenue. Réessayez dans un instant.",
+    };
   }
 }
