@@ -15,6 +15,7 @@ export type ProductCardData = {
   brand: string;
   basePrice: number;
   comparePrice?: number | null;
+  minPrice?: number; // Prix le plus bas parmi les variants (si différent de basePrice)
   imageUrl: string;
   imageBg?: string; // Couleur de fond si pas d'image
   ageLabel?: string;
@@ -149,13 +150,21 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[15px] font-bold">
-              {formatPrice(product.basePrice)}
-            </span>
-            {product.comparePrice && product.comparePrice > product.basePrice && (
-              <span className="text-[12px] text-gray-400 line-through ml-1.5">
-                {formatPrice(product.comparePrice)}
+            {product.minPrice !== undefined && product.minPrice < product.basePrice ? (
+              <span className="text-[15px] font-bold">
+                À partir de {formatPrice(product.minPrice)}
               </span>
+            ) : (
+              <>
+                <span className="text-[15px] font-bold">
+                  {formatPrice(product.basePrice)}
+                </span>
+                {product.comparePrice && product.comparePrice > product.basePrice && (
+                  <span className="text-[12px] text-gray-400 line-through ml-1.5">
+                    {formatPrice(product.comparePrice)}
+                  </span>
+                )}
+              </>
             )}
           </div>
           <button

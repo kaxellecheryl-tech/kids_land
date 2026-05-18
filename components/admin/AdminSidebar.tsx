@@ -7,6 +7,9 @@ import {
   LayoutDashboard,
   ShoppingBag,
   Package,
+  Tag,
+  Ticket,
+  FolderOpen,
   LogOut,
   ExternalLink,
   type LucideIcon,
@@ -17,9 +20,12 @@ import { logout } from "@/app/actions/auth";
 type NavItem = { href: string; label: string; Icon: LucideIcon };
 
 const NAV: NavItem[] = [
-  { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
-  { href: "/admin/orders", label: "Commandes", Icon: ShoppingBag },
-  { href: "/admin/products", label: "Produits", Icon: Package },
+  { href: "/admin",             label: "Dashboard",   Icon: LayoutDashboard },
+  { href: "/admin/orders",      label: "Commandes",   Icon: ShoppingBag },
+  { href: "/admin/products",    label: "Produits",    Icon: Package },
+  { href: "/admin/categories",  label: "Catégories",  Icon: FolderOpen },
+  { href: "/admin/brands",      label: "Marques",     Icon: Tag },
+  { href: "/admin/coupons",     label: "Codes promo", Icon: Ticket },
 ];
 
 type Props = {

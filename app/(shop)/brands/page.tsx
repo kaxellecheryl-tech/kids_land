@@ -1,20 +1,14 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Tag, Shirt, Footprints, Baby, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Tag, Baby, type LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 const BRAND_STYLES: Record<string, { bg: string; Icon: LucideIcon }> = {
-  "babybol":       { bg: "#F6E5E5", Icon: Baby      },
-  "primark-kids":  { bg: "#99C5FF", Icon: Shirt     },
-  "hm-kids":       { bg: "#fff3bb", Icon: Shirt     },
-  "zara-mini":     { bg: "#d8f5c0", Icon: Sparkles  },
-  "george":        { bg: "#ffe8d4", Icon: Footprints },
+  "babybol": { bg: "#F6E5E5", Icon: Baby },
 };
 
 const FALLBACK_STYLES: { bg: string; Icon: LucideIcon }[] = [
-  { bg: "#99C5FF", Icon: Tag      },
-  { bg: "#F6E5E5", Icon: Shirt    },
-  { bg: "#d8f5c0", Icon: Sparkles },
-  { bg: "#fff3bb", Icon: Baby     },
+  { bg: "#99C5FF", Icon: Tag  },
+  { bg: "#fff3bb", Icon: Baby },
 ];
 
 async function getBrands() {
@@ -80,7 +74,7 @@ export default async function BrandsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(brands as { id: string; slug: string; name: string; _count: { products: number } }[]).map((brand, i) => {
+            {(brands as { id: string; slug: string; name: string; logoUrl: string | null; _count: { products: number } }[]).map((brand, i) => {
               const style = BRAND_STYLES[brand.slug] ?? FALLBACK_STYLES[i % FALLBACK_STYLES.length];
               const { Icon } = style;
               const count = brand._count.products;
@@ -99,7 +93,16 @@ export default async function BrandsPage() {
                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ backgroundColor: style.bg, filter: "brightness(0.96)" }}
                     />
-                    <Icon size={48} className="relative z-10 text-gray-600" />
+                    {brand.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={brand.logoUrl}
+                        alt={brand.name}
+                        className="relative z-10 h-14 w-auto object-contain"
+                      />
+                    ) : (
+                      <Icon size={48} className="relative z-10 text-gray-600" />
+                    )}
                   </div>
 
                   <div className="px-6 py-5 flex items-center justify-between">

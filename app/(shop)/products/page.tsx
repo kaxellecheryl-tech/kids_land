@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Sparkles, Tag, Shirt, Baby, Backpack, Search, type LucideIcon } from "lucide-react";
 import { ProductCard, type ProductCardData } from "@/components/shop/ProductCard";
 import { prisma } from "@/lib/prisma";
+import { computeMinPrice } from "@/lib/utils";
 import { Gender, Prisma } from "@prisma/client";
 
 type SearchParams = { filter?: string; gender?: string; category?: string; q?: string };
@@ -47,7 +48,11 @@ async function getProducts(params: SearchParams): Promise<ProductCardData[]> {
     }
 
     const rows: Prisma.ProductGetPayload<{
-      include: { brand: true; images: true };
+      include: {
+        brand: true;
+        images: true;
+        variants: { select: { priceOverride: true } };
+      };
     }>[] = await prisma.product.findMany({
       where,
       take: 48,
@@ -55,6 +60,7 @@ async function getProducts(params: SearchParams): Promise<ProductCardData[]> {
       include: {
         brand: true,
         images: { take: 1, orderBy: { position: "asc" } },
+        variants: { select: { priceOverride: true } },
       },
     });
 
@@ -65,6 +71,7 @@ async function getProducts(params: SearchParams): Promise<ProductCardData[]> {
       brand: p.brand?.name ?? "Kids Land",
       basePrice: p.basePrice,
       comparePrice: p.comparePrice,
+      minPrice: computeMinPrice(p.basePrice, p.variants),
       imageUrl: p.images[0]?.url ?? "",
       imageBg: "#F6E5E5",
       badge: p.comparePrice && p.comparePrice > p.basePrice ? "sale" : null,

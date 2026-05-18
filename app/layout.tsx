@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-montserrat",
+  display: "swap",
+});
+
+const tropika = localFont({
+  src: "./fonts/Tropika_Island_Font/Aiyari - Tropika Island Int.otf",
+  variable: "--font-tropika",
   display: "swap",
 });
 
@@ -31,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={montserrat.variable}>
+    <html lang="fr" className={`${montserrat.variable} ${tropika.variable}`}>
       <body>{children}</body>
     </html>
   );

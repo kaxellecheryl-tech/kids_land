@@ -9,7 +9,21 @@ import {
 import { useState } from "react";
 import { useCart } from "@/lib/cart-store";
 import { useWishlist } from "@/lib/wishlist-store";
-import { formatPrice, formatAge, cn } from "@/lib/utils";
+import { formatPrice, formatAge, cn, computeMinPrice } from "@/lib/utils";
+import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
+
+const FRENCH_COLORS: Record<string, string> = {
+  rouge: "#e53e3e", bleu: "#3182ce", vert: "#38a169", jaune: "#d69e2e",
+  rose: "#ed64a6", violet: "#805ad5", orange: "#dd6b20", noir: "#1a202c",
+  blanc: "#f5f5f5", gris: "#a0aec0", beige: "#d4a574", marron: "#8b4513",
+  "bleu marine": "#1a365d", "bleu ciel": "#63b3ed", turquoise: "#38b2ac",
+  corail: "#fc8181", lavande: "#b794f4", menthe: "#68d391",
+};
+
+function toDisplayColor(color: string): string {
+  if (/^#[0-9a-fA-F]{3,6}$/.test(color)) return color;
+  return FRENCH_COLORS[color.toLowerCase()] ?? color;
+}
 
 export type ProductFull = {
   id: string;
@@ -82,6 +96,12 @@ export function ProductDetail({ product }: { product: ProductFull }) {
       : null;
 
   const price = selectedVariant?.priceOverride ?? product.basePrice;
+
+  // Fourchette de prix parmi tous les variants (pour l'affichage avant sélection)
+  const minPrice = computeMinPrice(product.basePrice, product.variants);
+  const allEffectivePrices = product.variants.map((v) => v.priceOverride ?? product.basePrice);
+  const maxVariantPrice = allEffectivePrices.length > 0 ? Math.max(...allEffectivePrices) : product.basePrice;
+  const hasPriceRange = minPrice !== undefined && minPrice < maxVariantPrice;
 
   const hasVariants = allSizes.length > 0;
   const sizeSelected = !hasVariants || selectedSize !== null;
@@ -261,13 +281,24 @@ export function ProductDetail({ product }: { product: ProductFull }) {
 
         {/* Price */}
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold tracking-tight">
-            {formatPrice(price)}
-          </span>
-          {product.comparePrice && product.comparePrice > product.basePrice && (
-            <span className="text-lg text-gray-400 line-through">
-              {formatPrice(product.comparePrice)}
-            </span>
+          {!selectedSize && hasPriceRange ? (
+            <>
+              <span className="text-3xl font-bold tracking-tight">
+                {formatPrice(minPrice!)} – {formatPrice(maxVariantPrice)}
+              </span>
+              <span className="text-[12px] text-gray-400">selon la taille</span>
+            </>
+          ) : (
+            <>
+              <span className="text-3xl font-bold tracking-tight">
+                {formatPrice(price)}
+              </span>
+              {product.comparePrice && product.comparePrice > product.basePrice && (
+                <span className="text-lg text-gray-400 line-through">
+                  {formatPrice(product.comparePrice)}
+                </span>
+              )}
+            </>
           )}
         </div>
 
@@ -283,9 +314,7 @@ export function ProductDetail({ product }: { product: ProductFull }) {
                   </span>
                 )}
               </span>
-              <button className="text-[12px] text-brand-orange font-medium hover:underline">
-                Guide des tailles
-              </button>
+              <SizeGuideModal />
             </div>
             <div className="flex flex-wrap gap-2">
               {allSizes.map((size) => {
@@ -317,30 +346,40 @@ export function ProductDetail({ product }: { product: ProductFull }) {
         {/* Color selector */}
         {hasColors && colorsForSize.length > 0 && (
           <div>
-            <div className="text-[12px] font-bold uppercase tracking-widest text-gray-600 mb-3">
-              Couleur
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-gray-600">
+                Couleur
+              </span>
               {selectedColor && (
-                <span className="ml-2 text-black normal-case tracking-normal">
-                  — {selectedColor}
-                </span>
+                <span
+                  className="w-4 h-4 rounded-full border border-gray-200 shrink-0"
+                  style={{ backgroundColor: toDisplayColor(selectedColor) }}
+                />
               )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {colorsForSize.map(({ color, stock }) => (
                 <button
                   key={color}
+                  type="button"
+                  title={color}
                   disabled={stock === 0}
                   onClick={() => setSelectedColor(color)}
                   className={cn(
-                    "px-4 py-2 rounded-xl text-[13px] font-semibold border-2 transition-all",
+                    "relative w-8 h-8 rounded-full border-2 transition-all",
                     stock === 0
-                      ? "border-gray-100 text-gray-300 bg-gray-50 line-through cursor-not-allowed"
+                      ? "opacity-40 cursor-not-allowed border-gray-100"
                       : selectedColor === color
-                      ? "border-black bg-black text-white"
-                      : "border-gray-200 text-gray-700 hover:border-gray-400"
+                      ? "border-black ring-2 ring-black ring-offset-2"
+                      : "border-white hover:scale-110 shadow-sm"
                   )}
+                  style={{ backgroundColor: toDisplayColor(color) }}
                 >
-                  {color}
+                  {stock === 0 && (
+                    <span className="absolute inset-0 overflow-hidden rounded-full flex items-center justify-center">
+                      <span className="w-[140%] h-px bg-gray-500/50 rotate-45 block" />
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

@@ -6,11 +6,12 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag, Shirt, MapPin, Phone, User, FileText,
-  Truck, RefreshCcw, AlertCircle, ChevronRight,
+  Truck, RefreshCcw, AlertCircle, ChevronRight, Tag, X,
 } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
 import { createOrder, type CheckoutInput } from "@/app/actions/checkout";
+import { validateCoupon, type CouponValidation } from "@/app/actions/coupon";
 
 
 const CITIES_CI = [
@@ -47,15 +48,34 @@ export function CheckoutForm({
   const [error, setError]         = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Coupon
+  const [couponCode, setCouponCode]       = useState("");
+  const [couponResult, setCouponResult]   = useState<CouponValidation | null>(null);
+  const [couponPending, startCoupon]      = useTransition();
+
   useEffect(() => setMounted(true), []);
 
-  const fee   = shippingFee(zone, subtotal);
-  const total = subtotal + fee;
+  const fee      = shippingFee(zone, subtotal);
+  const discount = couponResult?.ok ? couponResult.discountAmount : 0;
+  const total    = subtotal + fee - discount;
 
   function handleZoneChange(z: "abidjan" | "interieur") {
     setZone(z);
     if (z === "abidjan") setCity("Abidjan");
     else setCity("");
+  }
+
+  function handleCoupon() {
+    if (!couponCode.trim()) return;
+    startCoupon(async () => {
+      const result = await validateCoupon(couponCode, subtotal);
+      setCouponResult(result);
+    });
+  }
+
+  function removeCoupon() {
+    setCouponCode("");
+    setCouponResult(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,6 +101,8 @@ export function CheckoutForm({
       shipping: { fullName, phone, zone, city, district, street, notes },
       subtotal,
       shippingFee: fee,
+      discount,
+      couponCode: couponResult?.ok ? couponResult.code : undefined,
       total,
     };
 
@@ -332,10 +354,65 @@ export function CheckoutForm({
                   {" "}(encore {formatPrice(25000 - subtotal)})
                 </p>
               )}
+              {discount > 0 && (
+                <div className="flex justify-between text-green-600 font-medium">
+                  <span className="flex items-center gap-1">
+                    <Tag size={12} /> {couponResult?.ok ? couponResult.label : "Remise"}
+                  </span>
+                  <span>−{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-base pt-3 border-t border-gray-100 mt-1">
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
               </div>
+            </div>
+
+            {/* Coupon input */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              {couponResult?.ok ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <Tag size={13} />
+                    <span className="text-[13px] font-bold">{couponResult.code}</span>
+                    <span className="text-[12px]">— {couponResult.label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="text-green-500 hover:text-green-700 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      if (couponResult) setCouponResult(null);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCoupon())}
+                    placeholder="Code promo"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] outline-none focus:border-brand-orange transition-colors placeholder:text-gray-300 uppercase font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCoupon}
+                    disabled={couponPending || !couponCode.trim()}
+                    className="px-4 py-2.5 bg-black text-white rounded-xl text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors disabled:opacity-40"
+                  >
+                    {couponPending ? <RefreshCcw size={13} className="animate-spin" /> : "Valider"}
+                  </button>
+                </div>
+              )}
+              {couponResult && !couponResult.ok && (
+                <p className="text-[12px] text-red-500 mt-1.5 flex items-center gap-1">
+                  <AlertCircle size={11} /> {couponResult.error}
+                </p>
+              )}
             </div>
           </div>
 

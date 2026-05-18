@@ -6,8 +6,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ProductCard, type ProductCardData } from "@/components/shop/ProductCard";
+import { PromoCopyButton } from "@/components/shop/PromoCopyButton";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, computeMinPrice } from "@/lib/utils";
+import { getActiveFeaturedCoupon } from "@/app/actions/coupon";
 
 // Pour la phase 1, fallback en données mock si la DB n'est pas encore seedée.
 // Phase 2 : on remplace par un vrai fetch DB.
@@ -108,6 +110,7 @@ async function getAllProducts(): Promise<{ hero: ProductCardData[]; featured: Pr
       include: {
         brand: true,
         images: { take: 1, orderBy: { position: "asc" } },
+        variants: { select: { priceOverride: true } },
       },
     });
 
@@ -120,6 +123,7 @@ async function getAllProducts(): Promise<{ hero: ProductCardData[]; featured: Pr
       brand: p.brand?.name ?? "Kids Land",
       basePrice: p.basePrice,
       comparePrice: p.comparePrice,
+      minPrice: computeMinPrice(p.basePrice, p.variants),
       imageUrl: p.images[0]?.url ?? "",
       imageBg: "#F6E5E5",
     }));
@@ -168,13 +172,16 @@ async function getCategories() {
   }
 }
 
-const BRANDS: { name: string; slug: string }[] = [
-  { name: "Babybol",      slug: "babybol" },
-  { name: "Primark Kids", slug: "primark-kids" },
-  { name: "H&M Kids",     slug: "hm-kids" },
-  { name: "Zara Mini",    slug: "zara-mini" },
-  { name: "George",       slug: "george" },
-];
+async function getBrands() {
+  try {
+    return await prisma.brand.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, slug: true, name: true, logoUrl: true },
+    });
+  } catch {
+    return [];
+  }
+}
 
 const FEATURES: { Icon: LucideIcon; title: string; desc: string; bg: string }[] = [
   {
@@ -204,9 +211,11 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string; bg: string }[] 
 ];
 
 export default async function HomePage() {
-  const [{ hero, featured: products }, categories] = await Promise.all([
+  const [{ hero, featured: products }, categories, brands, featuredCoupon] = await Promise.all([
     getAllProducts(),
     getCategories(),
+    getBrands(),
+    getActiveFeaturedCoupon(),
   ]);
 
   return (
@@ -382,41 +391,62 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 gap-3">
             <PromoCard Icon={Truck} value="Gratuit" desc="Livraison dès 25 000 F" />
             <PromoCard Icon={RotateCcw} value="30j" desc="Retours offerts" />
-            <div className="col-span-2 bg-brand-orange rounded-md flex items-center justify-between p-6">
-              <div>
-                <div className="text-xl font-bold text-white">Code : KIDS15</div>
-                <div className="text-xs text-white/80 mt-1">
-                  −15% sur votre première commande
+            {featuredCoupon && (
+              <div className="col-span-2 bg-brand-orange rounded-md flex items-center justify-between p-6 gap-4">
+                <div className="min-w-0">
+                  <div className="text-xl font-bold text-white">
+                    Code : {featuredCoupon.code}
+                  </div>
+                  <div className="text-xs text-white/80 mt-1 truncate">
+                    {featuredCoupon.description ?? (
+                      featuredCoupon.discountType === "PERCENTAGE"
+                        ? `−${featuredCoupon.discountValue}% sur votre commande`
+                        : featuredCoupon.discountType === "FIXED_AMOUNT"
+                        ? `−${featuredCoupon.discountValue} F sur votre commande`
+                        : "Livraison offerte"
+                    )}
+                  </div>
                 </div>
+                <PromoCopyButton code={featuredCoupon.code} />
               </div>
-              <button className="bg-white text-black text-xs font-bold px-5 py-2.5 rounded-full uppercase tracking-wide hover:-translate-y-0.5 transition-transform">
-                Copier
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* BRANDS */}
-      <section className="bg-white border-b border-gray-100 py-20">
-        <div className="container-shop">
-          <SectionHeader
-            title="Nos marques"
-            subtitle="Sélection premium des meilleures marques internationales"
-          />
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
-            {BRANDS.map((brand) => (
-              <Link
-                key={brand.slug}
-                href={`/brands/${brand.slug}`}
-                className="bg-white border border-gray-200 rounded-full px-6 py-3.5 text-[13px] font-bold tracking-wide uppercase text-gray-600 hover:border-brand-blue-dark hover:bg-brand-blue-dark hover:text-white transition-colors whitespace-nowrap"
-              >
-                {brand.name}
-              </Link>
-            ))}
+      {brands.length > 0 && (
+        <section className="bg-white border-b border-gray-100 py-20">
+          <div className="container-shop">
+            <SectionHeader
+              title="Nos marques"
+              subtitle="Sélection premium des meilleures marques internationales"
+            />
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              {brands.map((brand) => (
+                <Link
+                  key={brand.slug}
+                  href={`/brands/${brand.slug}`}
+                  className="group bg-white border border-gray-100 rounded-2xl px-8 py-5 flex items-center justify-center hover:border-brand-blue-dark hover:shadow-md transition-all duration-200 min-w-[140px]"
+                >
+                  {brand.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={brand.logoUrl}
+                      alt={brand.name}
+                      className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+                    />
+                  ) : (
+                    <span className="text-[13px] font-bold tracking-wide uppercase text-gray-600 group-hover:text-brand-blue-dark transition-colors">
+                      {brand.name}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FEATURES */}
       <section className="bg-[#FDF8F8] py-20">

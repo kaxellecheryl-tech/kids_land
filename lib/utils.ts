@@ -48,3 +48,18 @@ export function formatAge(months: number): string {
   const years = Math.floor(months / 12);
   return years === 1 ? "1 an" : `${years} ans`;
 }
+
+/**
+ * Calcule le prix minimum effectif parmi tous les variants.
+ * Un variant sans priceOverride utilise le basePrice.
+ * Retourne undefined si tous les variants ont le même prix que basePrice.
+ */
+export function computeMinPrice(
+  basePrice: number,
+  variants: { priceOverride: number | null }[]
+): number | undefined {
+  if (variants.length === 0) return undefined;
+  const prices = variants.map((v) => v.priceOverride ?? basePrice);
+  const min = Math.min(...prices);
+  return min < basePrice ? min : undefined;
+}

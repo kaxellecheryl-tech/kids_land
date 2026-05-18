@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createCheckoutSession } from "@/lib/wave";
 import { generateOrderNumber } from "@/lib/utils";
+import { incrementCouponUsage } from "./coupon";
 
 export type CheckoutItem = {
   productId: string;
@@ -29,6 +30,8 @@ export type CheckoutInput = {
   };
   subtotal: number;
   shippingFee: number;
+  discount: number;
+  couponCode?: string;
   total: number;
 };
 
@@ -75,7 +78,7 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
         notes: input.shipping.notes ?? null,
         subtotal: input.subtotal,
         shippingFee: input.shippingFee,
-        discount: 0,
+        discount: input.discount ?? 0,
         total: input.total,
         items: {
           create: input.items.map((item) => ({
@@ -101,6 +104,10 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
       // clientReference = order.id pour identifier la commande dans le webhook
       clientReference: order.id,
     });
+
+    if (input.couponCode) {
+      await incrementCouponUsage(input.couponCode).catch(() => {});
+    }
 
     return { ok: true, orderNumber, paymentUrl: session.wave_launch_url };
   } catch (err) {

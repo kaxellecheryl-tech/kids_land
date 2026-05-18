@@ -20,26 +20,7 @@ async function main() {
     update: {},
     create: { slug: "babybol", name: "Babybol" },
   });
-  const primark = await prisma.brand.upsert({
-    where: { slug: "primark-kids" },
-    update: {},
-    create: { slug: "primark-kids", name: "Primark Kids" },
-  });
-  const hm = await prisma.brand.upsert({
-    where: { slug: "hm-kids" },
-    update: {},
-    create: { slug: "hm-kids", name: "H&M Kids" },
-  });
-  const zara = await prisma.brand.upsert({
-    where: { slug: "zara-mini" },
-    update: {},
-    create: { slug: "zara-mini", name: "Zara Mini" },
-  });
-  const george = await prisma.brand.upsert({
-    where: { slug: "george" },
-    update: {},
-    create: { slug: "george", name: "George" },
-  });
+
 
   // ─── Categories ───
   const robes = await prisma.category.upsert({

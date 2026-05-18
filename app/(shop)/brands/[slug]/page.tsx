@@ -1,17 +1,19 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Tag, Shirt, Footprints, Baby, Sparkles, Package, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Tag, Baby, Package, type LucideIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ProductCard, type ProductCardData } from "@/components/shop/ProductCard";
 import { prisma } from "@/lib/prisma";
+import { computeMinPrice } from "@/lib/utils";
 import type { Metadata } from "next";
 
 const BRAND_STYLES: Record<string, { bg: string; Icon: LucideIcon }> = {
-  "babybol":       { bg: "#F6E5E5", Icon: Baby       },
-  "primark-kids":  { bg: "#99C5FF", Icon: Shirt      },
-  "hm-kids":       { bg: "#fff3bb", Icon: Shirt      },
-  "zara-mini":     { bg: "#d8f5c0", Icon: Sparkles   },
-  "george":        { bg: "#ffe8d4", Icon: Footprints },
+  "babybol": { bg: "#F6E5E5", Icon: Baby },
 };
+
+const BRAND_DESCRIPTIONS: Record<string, string> = {
+  "babybol": "Babybol est une marque espagnole de vêtements pour bébés et enfants, reconnue pour ses ensembles alliant confort, qualité et style avec des finitions soignées. Ses matières douces conviennent aux peaux sensibles des tout-petits, et la certification OEKO-TEX Standard 100 garantit l'absence de substances nocives. La marque se situe au même niveau de qualité que Zara Kids, H&M Kids ou Kiabi.",
+};
+
 const FALLBACK: { bg: string; Icon: LucideIcon } = { bg: "#99C5FF", Icon: Tag };
 
 async function getBrand(slug: string) {
@@ -30,16 +32,18 @@ async function getBrandProducts(brandId: string): Promise<ProductCardData[]> {
       include: {
         brand: true,
         images: { take: 1, orderBy: { position: "asc" } },
+        variants: { select: { priceOverride: true } },
       },
     });
 
-    return (rows as { id: string; slug: string; name: string; basePrice: number; comparePrice: number | null; brand: { name: string; slug: string } | null; images: { url: string }[] }[]).map((p) => ({
+    return rows.map((p) => ({
       id: p.id,
       slug: p.slug,
       name: p.name,
       brand: p.brand?.name ?? "Kids Land",
       basePrice: p.basePrice,
       comparePrice: p.comparePrice,
+      minPrice: computeMinPrice(p.basePrice, p.variants),
       imageUrl: p.images[0]?.url ?? "",
       imageBg: BRAND_STYLES[p.brand?.slug ?? ""]?.bg ?? "#F6E5E5",
       badge: p.comparePrice && p.comparePrice > p.basePrice ? "sale" : null,
@@ -75,6 +79,7 @@ export default async function BrandPage({
   const products = await getBrandProducts(brand.id);
   const style = BRAND_STYLES[slug] ?? FALLBACK;
   const { Icon } = style;
+  const description = BRAND_DESCRIPTIONS[slug] ?? `Découvrez toute la collection ${brand.name} — des pièces sélectionnées avec soin pour vos enfants.`;
 
   return (
     <>
@@ -89,10 +94,21 @@ export default async function BrandPage({
           </Link>
           <div className="flex items-end justify-between">
             <div>
-              <div className="mb-3"><Icon size={48} className="text-gray-700" /></div>
+              <div className="mb-4">
+                {brand.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.logoUrl}
+                    alt={brand.name}
+                    className="h-16 w-auto object-contain"
+                  />
+                ) : (
+                  <Icon size={48} className="text-gray-700" />
+                )}
+              </div>
               <h1 className="text-5xl font-bold tracking-tight mb-2">{brand.name}</h1>
-              <p className="text-sm text-gray-700">
-                Collection officielle &mdash; articles authentiques
+              <p className="text-sm text-gray-700 max-w-xl leading-relaxed mt-2">
+                {description}
               </p>
             </div>
             <div className="hidden sm:block text-right">
@@ -159,7 +175,7 @@ async function OtherBrands({ currentSlug }: { currentSlug: string }) {
 
     if (others.length === 0) return null;
 
-    const FALLBACK_ICONS: LucideIcon[] = [Baby, Shirt, Sparkles, Footprints];
+    const FALLBACK_ICONS: LucideIcon[] = [Baby, Tag];
 
     return (
       <section className="bg-[#FDF8F8] py-14">
@@ -174,7 +190,7 @@ async function OtherBrands({ currentSlug }: { currentSlug: string }) {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(others as { id: string; slug: string; name: string; _count: { products: number } }[]).map((b, i) => {
+            {(others as { id: string; slug: string; name: string; logoUrl: string | null; _count: { products: number } }[]).map((b, i) => {
               const s = BRAND_STYLES[b.slug] ?? { bg: "#99C5FF", Icon: FALLBACK_ICONS[i % FALLBACK_ICONS.length] };
               const BrandIcon = s.Icon;
               return (
@@ -187,7 +203,16 @@ async function OtherBrands({ currentSlug }: { currentSlug: string }) {
                     className="h-20 flex items-center justify-center"
                     style={{ backgroundColor: s.bg }}
                   >
-                    <BrandIcon size={32} className="text-gray-600" />
+                    {b.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={b.logoUrl}
+                        alt={b.name}
+                        className="h-10 w-auto object-contain"
+                      />
+                    ) : (
+                      <BrandIcon size={32} className="text-gray-600" />
+                    )}
                   </div>
                   <div className="px-4 py-3">
                     <div className="text-sm font-bold">{b.name}</div>

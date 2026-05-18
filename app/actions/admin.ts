@@ -155,3 +155,138 @@ export async function deleteProduct(id: string): Promise<{ error?: string }> {
     return { error: e instanceof Error ? e.message : "Erreur lors de la suppression" };
   }
 }
+
+// ── Categories ────────────────────────────────────────────────────────────────
+
+export type CategoryInput = {
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  parentId?: string;
+  position?: number;
+};
+
+export async function createCategory(
+  data: CategoryInput
+): Promise<{ error?: string; id?: string }> {
+  try {
+    await assertAdmin();
+    const category = await (prisma as any).category.create({
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description || null,
+        imageUrl: data.imageUrl || null,
+        parentId: data.parentId || null,
+        position: data.position ?? 0,
+      },
+    });
+    revalidatePath("/admin/categories");
+    revalidatePath("/products");
+    return { id: category.id };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la création" };
+  }
+}
+
+export async function updateCategory(
+  id: string,
+  data: CategoryInput
+): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).category.update({
+      where: { id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description || null,
+        imageUrl: data.imageUrl || null,
+        parentId: data.parentId || null,
+        position: data.position ?? 0,
+      },
+    });
+    revalidatePath("/admin/categories");
+    revalidatePath(`/admin/categories/${id}`);
+    revalidatePath("/products");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function deleteCategory(id: string): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).category.delete({ where: { id } });
+    revalidatePath("/admin/categories");
+    revalidatePath("/products");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la suppression" };
+  }
+}
+
+// ── Brands ────────────────────────────────────────────────────────────────────
+
+export type BrandInput = {
+  name: string;
+  slug: string;
+  logoUrl?: string;
+};
+
+export async function createBrand(
+  data: BrandInput
+): Promise<{ error?: string; id?: string }> {
+  try {
+    await assertAdmin();
+    const brand = await (prisma as any).brand.create({
+      data: {
+        name: data.name,
+        slug: data.slug,
+        logoUrl: data.logoUrl || null,
+      },
+    });
+    revalidatePath("/admin/brands");
+    revalidatePath("/brands");
+    return { id: brand.id };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la création" };
+  }
+}
+
+export async function updateBrand(
+  id: string,
+  data: BrandInput
+): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).brand.update({
+      where: { id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        logoUrl: data.logoUrl || null,
+      },
+    });
+    revalidatePath("/admin/brands");
+    revalidatePath(`/admin/brands/${id}`);
+    revalidatePath("/brands");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function deleteBrand(id: string): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).brand.delete({ where: { id } });
+    revalidatePath("/admin/brands");
+    revalidatePath("/brands");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur lors de la suppression" };
+  }
+}
