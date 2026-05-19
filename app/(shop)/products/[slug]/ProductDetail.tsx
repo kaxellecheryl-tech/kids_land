@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Heart, ShoppingBag, Check, ChevronLeft, ChevronRight,
-  Truck, RotateCcw, ShieldCheck, Minus, Plus, Shirt,
+  Truck, ShieldCheck, Minus, Plus, Shirt,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/lib/cart-store";
 import { useWishlist } from "@/lib/wishlist-store";
 import { formatPrice, formatAge, cn, computeMinPrice } from "@/lib/utils";
@@ -55,9 +55,8 @@ const GENDER_LABEL: Record<string, string | null> = {
 };
 
 const DELIVERY_PERKS = [
-  { Icon: Truck,       text: "Livraison 24–48h à Abidjan"      },
-  { Icon: RotateCcw,   text: "Retours gratuits sous 30 jours"  },
-  { Icon: ShieldCheck, text: "Article 100 % authentique"        },
+  { Icon: Truck,       text: "Livraison rapide en Côte d'Ivoire" },
+  { Icon: ShieldCheck, text: "Article 100 % authentique"         },
 ];
 
 export function ProductDetail({ product }: { product: ProductFull }) {
@@ -66,12 +65,14 @@ export function ProductDetail({ product }: { product: ProductFull }) {
   const toggleWL  = useWishlist((s) => s.toggle);
   const isFav     = useWishlist((s) => s.has(product.id));
 
-  const [activeImg, setActiveImg]     = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [activeImg, setActiveImg]         = useState(0);
+  const [selectedSize, setSelectedSize]   = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [quantity, setQuantity]         = useState(1);
-  const [justAdded, setJustAdded]       = useState(false);
-  const [imgErrors, setImgErrors]       = useState<Record<number, boolean>>({});
+  const [quantity, setQuantity]           = useState(1);
+  const [justAdded, setJustAdded]         = useState(false);
+  const [imgErrors, setImgErrors]         = useState<Record<number, boolean>>({});
+  const [isPaused, setIsPaused]           = useState(false);
+  const timerRef                          = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Variant logic ──────────────────────────────────────────────
   const sizeGroups = new Map<string, typeof product.variants>();
@@ -164,26 +165,68 @@ export function ProductDetail({ product }: { product: ProductFull }) {
 
   // ── Image navigation ──────────────────────────────────────────
   const images = product.images;
-  const prevImg = () => setActiveImg((i) => (i - 1 + images.length) % images.length);
-  const nextImg = () => setActiveImg((i) => (i + 1) % images.length);
+
+  // Liste ordonnée des couleurs uniques (pour fallback index→image)
+  const allColors = [...new Set(
+    product.variants.filter((v) => v.color).map((v) => v.color!)
+  )];
+
+  // Auto-slide : toutes les 5 s, pause au hover
+  useEffect(() => {
+    if (images.length <= 1 || isPaused) return;
+    timerRef.current = setInterval(() => {
+      setActiveImg((i) => (i + 1) % images.length);
+    }, 5000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [images.length, isPaused]);
+
+  function goTo(i: number) {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setActiveImg(i);
+  }
+  const prevImg = () => goTo((activeImg - 1 + images.length) % images.length);
+  const nextImg = () => goTo((activeImg + 1) % images.length);
+
+  // ── Couleur → image ───────────────────────────────────────────
+  function handleColorClick(color: string) {
+    setSelectedColor(color);
+    // 1. Cherche par alt (ex: alt = "rouge", "bleu"…)
+    const byAlt = images.findIndex(
+      (img) => img.alt?.toLowerCase().includes(color.toLowerCase())
+    );
+    if (byAlt !== -1) { goTo(byAlt); return; }
+    // 2. Fallback : même index que la couleur dans la liste ordonnée
+    const colorIdx = allColors.indexOf(color);
+    if (colorIdx >= 0 && colorIdx < images.length) goTo(colorIdx);
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 items-start">
       {/* ── Gallery ──────────────────────────────────────────── */}
       <div className="space-y-3 lg:sticky lg:top-28">
         {/* Main image */}
-        <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#F6E5E5] flex items-center justify-center">
-          {images.length > 0 && !imgErrors[activeImg] ? (
-            <Image
-              key={activeImg}
-              src={images[activeImg].url}
-              alt={images[activeImg].alt ?? product.name}
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-              priority
-              onError={() => setImgErrors((e) => ({ ...e, [activeImg]: true }))}
-            />
+        <div
+          className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#F6E5E5] flex items-center justify-center"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {images.length > 0 ? (
+            images.map((img, i) =>
+              !imgErrors[i] ? (
+                <Image
+                  key={i}
+                  src={img.url}
+                  alt={img.alt ?? product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className={`object-cover absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    i === activeImg ? "opacity-100" : "opacity-0"
+                  }`}
+                  priority={i === 0}
+                  onError={() => setImgErrors((e) => ({ ...e, [i]: true }))}
+                />
+              ) : null
+            )
           ) : (
             <Shirt size={64} className="text-gray-200" />
           )}
@@ -211,6 +254,21 @@ export function ProductDetail({ product }: { product: ProductFull }) {
             <span className="absolute top-4 left-4 bg-brand-orange text-white text-[11px] font-black px-3 py-1 rounded-full">
               −{discount}%
             </span>
+          )}
+
+          {/* Dots */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === activeImg ? "bg-white w-5" : "bg-white/50 w-1.5 hover:bg-white/80"
+                  }`}
+                />
+              ))}
+            </div>
           )}
         </div>
 
@@ -364,7 +422,7 @@ export function ProductDetail({ product }: { product: ProductFull }) {
                   type="button"
                   title={color}
                   disabled={stock === 0}
-                  onClick={() => setSelectedColor(color)}
+                  onClick={() => handleColorClick(color)}
                   className={cn(
                     "relative w-8 h-8 rounded-full border-2 transition-all",
                     stock === 0

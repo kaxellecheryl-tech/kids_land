@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, CheckCircle, XCircle } from "lucide-react";
 import { TablePagination } from "@/components/admin/TablePagination";
 
@@ -31,6 +32,7 @@ function formatDate(d: Date | string | null) {
 const PER_PAGE = 10;
 
 export function CouponsTable({ coupons }: { coupons: Coupon[] }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const paginated = coupons.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -59,9 +61,8 @@ export function CouponsTable({ coupons }: { coupons: Coupon[] }) {
             const isExpired = c.expiresAt && new Date(c.expiresAt) < new Date();
             const isFull    = c.maxUses !== null && c.usedCount >= c.maxUses;
             return (
-              <tr key={c.id} className="relative hover:bg-gray-50/40 cursor-pointer transition-colors">
+              <tr key={c.id} onClick={() => router.push(`/admin/coupons/${c.id}`)} className="hover:bg-gray-50/40 cursor-pointer transition-colors">
                 <td className="px-6 py-3">
-                  <Link href={`/admin/coupons/${c.id}`} className="absolute inset-0" aria-label={`Éditer ${c.code}`} />
                   <span className="font-mono text-[13px] font-bold tracking-widest">{c.code}</span>
                   {c.description && <p className="text-[11px] text-gray-400 mt-0.5">{c.description}</p>}
                 </td>
@@ -83,7 +84,7 @@ export function CouponsTable({ coupons }: { coupons: Coupon[] }) {
                     </span>
                   )}
                 </td>
-                <td className="relative z-10 px-6 py-3 text-right">
+                <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                   <Link href={`/admin/coupons/${c.id}`} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-black transition-colors">
                     <Pencil size={12} /> Éditer
                   </Link>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, ChevronRight, FolderOpen } from "lucide-react";
 import { TablePagination } from "@/components/admin/TablePagination";
 
@@ -20,6 +21,7 @@ type Category = {
 const PER_PAGE = 10;
 
 export function CategoriesTable({ categories }: { categories: Category[] }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const paginated = categories.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -46,9 +48,8 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
         </thead>
         <tbody className="divide-y divide-gray-50">
           {paginated.map((c) => (
-            <tr key={c.id} className="relative hover:bg-gray-50/40 cursor-pointer transition-colors">
+            <tr key={c.id} onClick={() => router.push(`/admin/categories/${c.id}`)} className="hover:bg-gray-50/40 cursor-pointer transition-colors">
               <td className="px-6 py-3">
-                <Link href={`/admin/categories/${c.id}`} className="absolute inset-0" aria-label={`Éditer ${c.name}`} />
                 <div className="flex items-center gap-2">
                   {c.parentId && <ChevronRight size={12} className="text-gray-300 shrink-0" />}
                   {c.imageUrl && (
@@ -73,7 +74,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
               </td>
               <td className="px-4 py-3 text-[12px] text-gray-500">{c._count.products}</td>
               <td className="px-4 py-3 text-[12px] text-gray-400 font-mono">{c.position}</td>
-              <td className="relative z-10 px-6 py-3 text-right">
+              <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                 <Link href={`/admin/categories/${c.id}`} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-black transition-colors">
                   <Pencil size={12} /> Éditer
                 </Link>

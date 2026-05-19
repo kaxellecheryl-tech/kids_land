@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { TablePagination } from "@/components/admin/TablePagination";
 
@@ -39,6 +39,7 @@ type Order = {
 const PER_PAGE = 10;
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const paginated = orders.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -64,9 +65,8 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         </thead>
         <tbody className="divide-y divide-gray-50">
           {paginated.map((order) => (
-            <tr key={order.id} className="relative hover:bg-gray-50/50 cursor-pointer transition-colors">
+            <tr key={order.id} onClick={() => router.push(`/admin/orders/${order.id}`)} className="hover:bg-gray-50/50 cursor-pointer transition-colors">
               <td className="px-6 py-4">
-                <Link href={`/admin/orders/${order.id}`} className="absolute inset-0" aria-label={`Commande ${order.orderNumber}`} />
                 <span className="text-[13px] font-bold">{order.orderNumber}</span>
               </td>
               <td className="px-4 py-4">

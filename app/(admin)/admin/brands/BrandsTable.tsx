@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pencil, Tag } from "lucide-react";
 import { TablePagination } from "@/components/admin/TablePagination";
 
@@ -16,6 +17,7 @@ type Brand = {
 const PER_PAGE = 10;
 
 export function BrandsTable({ brands }: { brands: Brand[] }) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const paginated = brands.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -42,9 +44,8 @@ export function BrandsTable({ brands }: { brands: Brand[] }) {
         </thead>
         <tbody className="divide-y divide-gray-50">
           {paginated.map((brand) => (
-            <tr key={brand.id} className="relative hover:bg-gray-50/40 cursor-pointer transition-colors">
+            <tr key={brand.id} onClick={() => router.push(`/admin/brands/${brand.id}`)} className="hover:bg-gray-50/40 cursor-pointer transition-colors">
               <td className="px-6 py-3">
-                <Link href={`/admin/brands/${brand.id}`} className="absolute inset-0" aria-label={`Éditer ${brand.name}`} />
                 <div className="w-16 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
                   {brand.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -63,7 +64,7 @@ export function BrandsTable({ brands }: { brands: Brand[] }) {
               <td className="px-4 py-3 text-right">
                 <span className="text-[13px] font-semibold text-gray-700">{brand._count.products}</span>
               </td>
-              <td className="relative z-10 px-6 py-3 text-right">
+              <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                 <Link href={`/admin/brands/${brand.id}`} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-black transition-colors">
                   <Pencil size={12} /> Éditer
                 </Link>

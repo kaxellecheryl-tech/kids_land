@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Pencil } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { ToggleActiveButton } from "./ToggleActiveButton";
@@ -24,6 +25,7 @@ type Product = {
 const PER_PAGE = 10;
 
 export function ProductsTable({ products }: { products: Product[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
@@ -119,14 +121,9 @@ export function ProductsTable({ products }: { products: Product[] }) {
                 const imageUrl = product.images[0]?.url;
 
                 return (
-                  <tr key={product.id} className="relative hover:bg-gray-50/40 cursor-pointer transition-colors">
+                  <tr key={product.id} onClick={() => router.push(`/admin/products/${product.id}`)} className="hover:bg-gray-50/40 cursor-pointer transition-colors">
                     {/* Image */}
                     <td className="px-6 py-3">
-                      <Link
-                        href={`/admin/products/${product.id}`}
-                        className="absolute inset-0"
-                        aria-label={`Éditer ${product.name}`}
-                      />
                       <div className="w-10 h-12 rounded-lg bg-brand-pink overflow-hidden">
                         {imageUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -182,7 +179,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
                     </td>
 
                     {/* Active toggle */}
-                    <td className="relative z-10 px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <ToggleActiveButton
                         productId={product.id}
                         isActive={product.isActive}
@@ -190,7 +187,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
                     </td>
 
                     {/* Featured / Vitrine toggle */}
-                    <td className="relative z-10 px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <ToggleFeaturedButton
                         productId={product.id}
                         isFeatured={product.isFeatured}
@@ -199,7 +196,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
                     </td>
 
                     {/* Edit */}
-                    <td className="relative z-10 px-6 py-3 text-right">
+                    <td className="px-6 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <Link
                         href={`/admin/products/${product.id}`}
                         className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 hover:text-black transition-colors"
