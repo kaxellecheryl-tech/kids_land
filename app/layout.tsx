@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import localFont from "next/font/local";
+// @ts-ignore: CSS module declarations are not available in this environment
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -24,6 +25,14 @@ export const metadata: Metadata = {
   description:
     "Le meilleur des vêtements et accessoires pour enfants. Primark Kids, H&M Kids, Zara Mini livrés partout en Côte d'Ivoire.",
   keywords: ["vêtements enfants", "Primark Kids", "Côte d'Ivoire", "Abidjan", "mode enfant"],
+  icons: {
+    icon: [
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
     title: "Kids Land — Vêtements pour enfants",
     description: "Style premium pour enfants. Livraison 48h en Côte d'Ivoire.",
