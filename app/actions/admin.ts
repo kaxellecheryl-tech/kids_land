@@ -144,6 +144,21 @@ export async function toggleProductActive(
   }
 }
 
+export async function toggleProductFeatured(
+  id: string,
+  isFeatured: boolean
+): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).product.update({ where: { id }, data: { isFeatured } });
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur" };
+  }
+}
+
 export async function deleteProduct(id: string): Promise<{ error?: string }> {
   try {
     await assertAdmin();

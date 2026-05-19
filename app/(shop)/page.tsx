@@ -2,14 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight, Shirt, Baby, Backpack, Sparkles, Footprints,
-  Truck, ShieldCheck, RotateCcw, MessageCircle, Star,
+  Truck, ShieldCheck, Gift, MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { ProductCard, type ProductCardData } from "@/components/shop/ProductCard";
-import { PromoCopyButton } from "@/components/shop/PromoCopyButton";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, computeMinPrice } from "@/lib/utils";
-import { getActiveFeaturedCoupon } from "@/app/actions/coupon";
 
 // Pour la phase 1, fallback en données mock si la DB n'est pas encore seedée.
 // Phase 2 : on remplace par un vrai fetch DB.
@@ -102,21 +100,20 @@ const MOCK_PRODUCTS: ProductCardData[] = [
   },
 ];
 
-async function getAllProducts(): Promise<{ hero: ProductCardData[]; featured: ProductCardData[] }> {
+async function getHeroProducts(): Promise<ProductCardData[]> {
   try {
     const rows = await prisma.product.findMany({
       where: { isActive: true, isFeatured: true },
-      take: 11,
+      take: 2,
+      orderBy: { updatedAt: "desc" },
       include: {
         brand: true,
         images: { take: 1, orderBy: { position: "asc" } },
         variants: { select: { priceOverride: true } },
       },
     });
-
-    if (rows.length === 0) return { hero: MOCK_PRODUCTS.slice(0, 3), featured: MOCK_PRODUCTS };
-
-    const mapped = rows.map((p: typeof rows[number]) => ({
+    if (rows.length === 0) return MOCK_PRODUCTS.slice(0, 2);
+    return rows.map((p: typeof rows[number]) => ({
       id: p.id,
       slug: p.slug,
       name: p.name,
@@ -127,10 +124,37 @@ async function getAllProducts(): Promise<{ hero: ProductCardData[]; featured: Pr
       imageUrl: p.images[0]?.url ?? "",
       imageBg: "#F6E5E5",
     }));
-
-    return { hero: mapped.slice(0, 3), featured: mapped.slice(3) };
   } catch {
-    return { hero: MOCK_PRODUCTS.slice(0, 3), featured: MOCK_PRODUCTS };
+    return MOCK_PRODUCTS.slice(0, 2);
+  }
+}
+
+async function getNewProducts(): Promise<ProductCardData[]> {
+  try {
+    const rows = await prisma.product.findMany({
+      where: { isActive: true },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      include: {
+        brand: true,
+        images: { take: 1, orderBy: { position: "asc" } },
+        variants: { select: { priceOverride: true } },
+      },
+    });
+    if (rows.length === 0) return MOCK_PRODUCTS;
+    return rows.map((p: typeof rows[number]) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      brand: p.brand?.name ?? "Kids Land",
+      basePrice: p.basePrice,
+      comparePrice: p.comparePrice,
+      minPrice: computeMinPrice(p.basePrice, p.variants),
+      imageUrl: p.images[0]?.url ?? "",
+      imageBg: "#F6E5E5",
+    }));
+  } catch {
+    return MOCK_PRODUCTS;
   }
 }
 
@@ -151,7 +175,10 @@ type CategoryRow = {
   _count: { products: number };
 };
 
-async function getCategories() {
+type CategoryItem = { slug: string; name: string; count: number; Icon: LucideIcon; bg: string };
+type BrandItem = { id: string; slug: string; name: string; logoUrl: string | null };
+
+async function getCategories(): Promise<CategoryItem[]> {
   try {
     const rows: CategoryRow[] = await prisma.category.findMany({
       orderBy: { position: "asc" },
@@ -172,7 +199,7 @@ async function getCategories() {
   }
 }
 
-async function getBrands() {
+async function getBrands(): Promise<BrandItem[]> {
   try {
     return await prisma.brand.findMany({
       orderBy: { name: "asc" },
@@ -187,35 +214,35 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string; bg: string }[] 
   {
     Icon: Truck,
     title: "Livraison rapide",
-    desc: "Recevez vos commandes en 24 à 48h partout en Côte d'Ivoire et dans la sous-région.",
+    desc: "Recevez vos commandes rapidement partout en Côte d'Ivoire.",
     bg: "#99C5FF",
   },
   {
     Icon: ShieldCheck,
-    title: "Authenticité garantie",
-    desc: "Tous nos articles proviennent directement des marques officielles. Zéro contrefaçon.",
+    title: "Marques authentiques",
+    desc: "C&A, Lee Cooper, Babybol — uniquement des articles originaux et de qualité.",
     bg: "#d8f5c0",
   },
   {
-    Icon: RotateCcw,
-    title: "Retours gratuits",
-    desc: "30 jours pour changer d'avis. Le retour est simple, rapide et entièrement gratuit.",
+    Icon: Gift,
+    title: "Livraison offerte",
+    desc: "La livraison est gratuite pour toute commande à partir de 30 000 F CFA d'achats.",
     bg: "#fff3bb",
   },
   {
     Icon: MessageCircle,
-    title: "Support 7j/7",
-    desc: "Notre équipe est disponible via WhatsApp, email et téléphone pour vous accompagner.",
+    title: "Support disponible",
+    desc: "Notre équipe est joignable sur WhatsApp pour répondre à toutes vos questions.",
     bg: "#F6E5E5",
   },
 ];
 
 export default async function HomePage() {
-  const [{ hero, featured: products }, categories, brands, featuredCoupon] = await Promise.all([
-    getAllProducts(),
+  const [hero, products, categories, brands] = await Promise.all([
+    getHeroProducts(),
+    getNewProducts(),
     getCategories(),
     getBrands(),
-    getActiveFeaturedCoupon(),
   ]);
 
   return (
@@ -224,19 +251,22 @@ export default async function HomePage() {
       <section className="grid lg:grid-cols-2 min-h-[calc(100vh-68px)]">
         <div className="bg-white border-r border-gray-100 flex flex-col justify-center px-12 lg:px-16 py-20">
           <span className="inline-flex items-center gap-2 bg-brand-blue-light text-brand-blue-dark text-[11px] font-bold tracking-[2px] uppercase px-4 py-1.5 rounded-full w-fit mb-7">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
-            Nouvelle collection printemps
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-orange opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-orange" />
+            </span>
+            Nouvel arrivage disponible
           </span>
           <h1 className="text-5xl lg:text-7xl font-bold leading-[1.0] tracking-tight mb-6">
-            Style
+            Style <span className="text-brand-green">enfant</span>,
             <br />
-            <span className="text-brand-green">Kids</span>,<br />
-            <span className="text-brand-orange">Premium</span>.
+            <span className="text-brand-orange">à portée de main.</span>
           </h1>
           <p className="text-base text-gray-600 leading-relaxed max-w-md mb-12">
-            Les meilleures marques enfants — Primark Kids, H&amp;M Kids, Zara Mini —
-            sélectionnées pour leur qualité et leur style. Livraison rapide partout
-            en Côte d&apos;Ivoire.
+            Babybol, Lee Cooper, C&amp;A — des marques de confiance sélectionnées
+            pour habiller vos enfants avec qualité et style.{" "}
+            <br />
+            Livraison partout en Côte d&apos;Ivoire.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link href="/products" className="btn-primary">
@@ -248,9 +278,9 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-3 gap-10 mt-14 pt-10 border-t border-gray-100">
             {[
-              { val: "500+", label: "Références" },
-              { val: "12+", label: "Marques" },
-              { val: "48h", label: "Livraison" },
+              { val: "+100", label: "Références" },
+              { val: "3", label: "Marques" },
+              { val: "Rapide", label: "Livraison" },
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-3xl font-bold tracking-tight">{s.val}</div>
@@ -263,30 +293,34 @@ export default async function HomePage() {
         </div>
 
         <div className="bg-brand-blue-dark relative overflow-hidden flex items-center justify-center min-h-[400px]">
-          <div className="absolute -top-24 -right-24 w-[500px] h-[500px] rounded-full bg-brand-yellow opacity-25" />
-          <div className="absolute -bottom-12 -left-12 w-[300px] h-[300px] rounded-full bg-brand-pink opacity-25" />
-          <div className="relative z-10 grid grid-cols-2 gap-4 p-10 max-w-[500px] w-full">
+          {/* Background texture */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(153,197,255,0.18)_0%,_transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(246,229,229,0.15)_0%,_transparent_60%)]" />
+          <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-brand-yellow opacity-20 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-52 h-52 rounded-full bg-brand-pink opacity-20 blur-2xl" />
+          {/* Dot grid */}
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+          />
+          <div className="relative z-10 grid grid-cols-2 gap-4 p-8 lg:p-10 max-w-[460px] w-full">
             <ShowcaseCard
               brand={hero[0]?.brand ?? "Babybol"}
               name={hero[0]?.name ?? "Robe fleurie été"}
               price={formatPrice(hero[0]?.basePrice ?? 8900)}
               imageUrl={hero[0]?.imageUrl}
+              slug={hero[0]?.slug}
               bg="#F6E5E5"
               tall
             />
             <ShowcaseCard
               brand={hero[1]?.brand ?? "Babybol"}
-              name={hero[1]?.name ?? "Ensemble"}
+              name={hero[1]?.name ?? "Ensemble été"}
               price={formatPrice(hero[1]?.basePrice ?? 7500)}
               imageUrl={hero[1]?.imageUrl}
+              slug={hero[1]?.slug}
               bg="#dce9ff"
-            />
-            <ShowcaseCard
-              brand={hero[2]?.brand ?? "Babybol"}
-              name={hero[2]?.name ?? "Ensemble"}
-              price={formatPrice(hero[2]?.basePrice ?? 8500)}
-              imageUrl={hero[2]?.imageUrl}
-              bg="#fff3bb"
+              tall
             />
           </div>
         </div>
@@ -298,12 +332,11 @@ export default async function HomePage() {
           {[...Array(2)].map((_, i) => (
             <div key={i} className="inline-flex gap-10 shrink-0">
               {[
-                "Primark Kids",
-                "H&M Kids",
-                "Zara Mini",
-                "George",
-                "Livraison 48h",
-                "Retours gratuits",
+                "Babybol",
+                "Lee Cooper",
+                "C&A",
+                "Livraison rapide",
+                "livraison gratuite dès 30 000 F CFA d'achat",
               ].map((label, idx) => (
                 <span
                   key={`${i}-${idx}`}
@@ -326,7 +359,7 @@ export default async function HomePage() {
           link="/products"
         />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categories.map((cat) => (
+          {categories.map((cat: CategoryItem) => (
             <Link
               key={cat.slug}
               href={`/products?category=${cat.slug}`}
@@ -355,64 +388,12 @@ export default async function HomePage() {
           link="/products?filter=new"
         />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {products.map((p) => (
+          {products.map((p: ProductCardData) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </section>
 
-      {/* BANNER */}
-      <section className="bg-brand-blue-dark relative overflow-hidden">
-        <div className="absolute -top-24 right-24 w-[400px] h-[400px] rounded-full bg-brand-yellow opacity-10" />
-        <div className="absolute -bottom-36 left-48 w-[400px] h-[400px] rounded-full bg-brand-pink opacity-10" />
-        <div className="container-shop py-20 grid lg:grid-cols-2 gap-16 items-center relative z-10">
-          <div>
-            <span className="inline-flex items-center gap-2 bg-white/15 text-white text-[10px] font-bold tracking-[2px] uppercase px-3.5 py-1.5 rounded-full mb-6">
-              <Star size={10} className="fill-current" /> Offre spéciale
-            </span>
-            <h2 className="text-5xl font-bold leading-[1.05] tracking-tight text-white mb-5">
-              Soldes
-              <br />
-              <span className="text-brand-yellow">jusqu&apos;à</span>
-              <br />
-              <span className="text-brand-green">−50%</span>
-            </h2>
-            <p className="text-base text-white/70 leading-relaxed mb-9 max-w-md">
-              Profitez de nos meilleures offres sur des centaines d&apos;articles de
-              grandes marques. Stocks limités — commandez dès maintenant.
-            </p>
-            <Link
-              href="/products?filter=sale"
-              className="inline-flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full text-[13px] font-bold uppercase tracking-wide hover:-translate-y-0.5 transition-transform"
-            >
-              Voir les soldes →
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <PromoCard Icon={Truck} value="Gratuit" desc="Livraison dès 25 000 F" />
-            <PromoCard Icon={RotateCcw} value="30j" desc="Retours offerts" />
-            {featuredCoupon && (
-              <div className="col-span-2 bg-brand-orange rounded-md flex items-center justify-between p-6 gap-4">
-                <div className="min-w-0">
-                  <div className="text-xl font-bold text-white">
-                    Code : {featuredCoupon.code}
-                  </div>
-                  <div className="text-xs text-white/80 mt-1 truncate">
-                    {featuredCoupon.description ?? (
-                      featuredCoupon.discountType === "PERCENTAGE"
-                        ? `−${featuredCoupon.discountValue}% sur votre commande`
-                        : featuredCoupon.discountType === "FIXED_AMOUNT"
-                        ? `−${featuredCoupon.discountValue} F sur votre commande`
-                        : "Livraison offerte"
-                    )}
-                  </div>
-                </div>
-                <PromoCopyButton code={featuredCoupon.code} />
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* BRANDS */}
       {brands.length > 0 && (
@@ -423,7 +404,7 @@ export default async function HomePage() {
               subtitle="Sélection premium des meilleures marques internationales"
             />
             <div className="flex flex-wrap items-center justify-center gap-6">
-              {brands.map((brand) => (
+              {brands.map((brand: BrandItem) => (
                 <Link
                   key={brand.slug}
                   href={`/brands/${brand.slug}`}
@@ -484,8 +465,8 @@ export default async function HomePage() {
               Les bons plans en avant-première
             </h3>
             <p className="text-sm text-white/60">
-              Rejoignez +2 000 parents qui reçoivent nos offres exclusives chaque
-              semaine
+              Rejoignez notre communauté de parents et soyez les premiers à
+              découvrir nos nouveaux arrivages avant tout le monde.
             </p>
           </div>
           <form className="relative z-10 flex flex-col sm:flex-row gap-2.5 shrink-0 w-full lg:w-auto">
@@ -547,6 +528,7 @@ function ShowcaseCard({
   bg,
   tall,
   imageUrl,
+  slug,
 }: {
   brand: string;
   name: string;
@@ -554,17 +536,17 @@ function ShowcaseCard({
   bg: string;
   tall?: boolean;
   imageUrl?: string;
+  slug?: string;
 }) {
-  return (
+  const inner = (
     <div
-      className={`bg-white rounded-[16px] overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 shadow-card ${
+      className={`group relative bg-white rounded-[20px] overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.22)] shadow-[0_6px_24px_rgba(0,0,0,0.14)] ${
         tall ? "row-span-2" : ""
       }`}
     >
+      {/* Image */}
       <div
-        className={`relative flex items-center justify-center ${
-          tall ? "aspect-[3/4]" : "aspect-square"
-        }`}
+        className={`relative overflow-hidden ${tall ? "aspect-[3/4]" : "aspect-square"}`}
         style={{ backgroundColor: bg }}
       >
         {imageUrl ? (
@@ -572,22 +554,45 @@ function ShowcaseCard({
             src={imageUrl}
             alt={name}
             fill
-            sizes="200px"
-            className="object-cover"
+            sizes="220px"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
           />
         ) : (
-          <Shirt size={40} className="text-gray-400" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Shirt size={44} className="text-gray-300" />
+          </div>
         )}
+
+        {/* Hover overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* "Voir →" CTA */}
+        <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4 translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          <span className="bg-white text-black text-[11px] font-black tracking-wider uppercase px-5 py-2 rounded-full shadow-lg">
+            Voir →
+          </span>
+        </div>
       </div>
-      <div className="px-4 py-3.5">
-        <div className="text-[9px] font-bold tracking-[1.5px] uppercase text-gray-500">
+
+      {/* Info */}
+      <div className="px-4 pt-3.5 pb-4">
+        <div className="inline-flex items-center bg-brand-blue-light/60 text-brand-blue-dark text-[9px] font-black tracking-[2px] uppercase px-2.5 py-1 rounded-full mb-2">
           {brand}
         </div>
-        <div className="text-[13px] font-semibold mb-1.5 leading-snug">{name}</div>
-        <div className="text-[13px] font-bold">{price}</div>
+        <div className="text-[13px] font-bold leading-snug line-clamp-2 text-gray-900">
+          {name}
+        </div>
+        <div className="text-[15px] font-black text-brand-orange mt-2 tracking-tight">
+          {price}
+        </div>
       </div>
     </div>
   );
+
+  if (slug) {
+    return <Link href={`/products/${slug}`}>{inner}</Link>;
+  }
+  return inner;
 }
 
 function PromoCard({

@@ -17,7 +17,6 @@ const NAV_LINKS = [
   { href: "/products?gender=boy", label: "Garçons" },
   { href: "/products?category=bebe", label: "Bébé" },
   { href: "/products?category=accessoires", label: "Accessoires" },
-  { href: "/products?filter=sale", label: "Soldes" },
 ];
 
 export function Header() {
@@ -77,11 +76,12 @@ export function Header() {
   return (
     <>
       <nav
-        className={`fixed top-0 inset-x-0 z-50 h-[96px] transition-all duration-300 ${
+        className={`fixed inset-x-0 z-50 h-[96px] transition-all duration-300 ${
           scrolled
             ? "bg-white shadow-[0_2px_24px_rgba(0,0,0,0.07)]"
             : "bg-white/95 backdrop-blur-md border-b border-brand-blue-light/40"
         }`}
+        style={{ top: "var(--announcement-h, 0px)" }}
       >
         <div className="container-shop h-full flex items-center justify-between">
           {/* Logo */}

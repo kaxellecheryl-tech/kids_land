@@ -451,7 +451,10 @@ export function ProductForm({ categories, brands, initial }: Props) {
                 }`}
               />
             </button>
-            <span className="text-[12px] font-semibold">Mis en avant</span>
+            <div>
+              <span className="text-[12px] font-semibold">Afficher dans la vitrine accueil</span>
+              <p className="text-[11px] text-gray-400 mt-0.5">Maximum 2 articles — visibles en page d&apos;accueil</p>
+            </div>
           </label>
         </div>
       </section>

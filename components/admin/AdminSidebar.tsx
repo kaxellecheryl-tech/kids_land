@@ -30,9 +30,10 @@ const NAV: NavItem[] = [
 
 type Props = {
   user: { fullName?: string | null; email?: string | null };
+  pendingOrdersCount?: number;
 };
 
-export function AdminSidebar({ user }: Props) {
+export function AdminSidebar({ user, pendingOrdersCount = 0 }: Props) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -78,7 +79,12 @@ export function AdminSidebar({ user }: Props) {
               size={16}
               className={isActive(href) ? "text-brand-orange" : "text-gray-400"}
             />
-            {label}
+            <span className="flex-1">{label}</span>
+            {href === "/admin/orders" && pendingOrdersCount > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 bg-brand-orange text-white text-[10px] font-black rounded-full flex items-center justify-center">
+                {pendingOrdersCount > 99 ? "99+" : pendingOrdersCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
