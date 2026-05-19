@@ -27,8 +27,8 @@ export const metadata: Metadata = {
   keywords: ["vêtements enfants", "Primark Kids", "Côte d'Ivoire", "Abidjan", "mode enfant"],
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
