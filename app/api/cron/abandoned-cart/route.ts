@@ -15,9 +15,9 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
-  // Paniers abandonnés : modifiés il y a entre 1h et 48h, email pas encore envoyé
-  const from = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-  const to = new Date(now.getTime() - 60 * 60 * 1000);
+  // Cron quotidien : paniers abandonnés entre 3h et 72h, email pas encore envoyé
+  const from = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+  const to = new Date(now.getTime() - 3 * 60 * 60 * 1000);
 
   const carts = await (prisma as any).cart.findMany({
     where: {
