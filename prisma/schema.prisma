@@ -17,12 +17,15 @@ model User {
   email     String   @unique
   fullName  String?
   phone     String?
-  role      UserRole @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role             UserRole @default(CUSTOMER)
+  marketingConsent Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   addresses Address[]
   orders    Order[]
+  cart      Cart?
+  wishlist  Wishlist?
 
   @@map("users")
 }
@@ -232,6 +235,33 @@ model ShippingZone {
   createdAt DateTime @default(now())
 
   @@map("shipping_zones")
+}
+
+// ───────────── WISHLIST ─────────────
+
+model Wishlist {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items               Json      // WishlistItem[]
+  updatedAt           DateTime  @updatedAt
+  lowStockEmailSentAt DateTime? // dernier email "bientôt en rupture"
+  reminderEmailSentAt DateTime? // dernier email "favoris oubliés"
+
+  @@map("wishlists")
+}
+
+// ───────────── CART ─────────────
+
+model Cart {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       Json      // CartItem[]
+  updatedAt   DateTime  @updatedAt
+  emailSentAt DateTime? // date du dernier email abandon panier envoyé
+
+  @@map("carts")
 }
 
 // ───────────── PROMO ─────────────

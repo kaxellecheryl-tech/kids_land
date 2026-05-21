@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { sendOrderConfirmation } from "@/lib/brevo";
 
-// Wave envoie des events via POST sur cette URL.
-// Configurer cette URL dans le dashboard Wave → Settings → Webhooks.
-//
-// Validation de signature : Wave inclut un header "Wave-Signature".
-// Pour l'activer, vérifier HMAC-SHA256(rawBody, WAVE_WEBHOOK_SECRET).
-// Pas encore activée ici — à faire en production avec WAVE_WEBHOOK_SECRET.
+async function verifySignature(rawBody: string, req: NextRequest): Promise<boolean> {
+  const secret = process.env.WAVE_WEBHOOK_SECRET;
+  if (!secret) return true; // pas configuré → on laisse passer (à activer en prod)
+  const signature = req.headers.get("wave-signature") ?? "";
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  return signature === expected;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+
+    if (!(await verifySignature(rawBody, req))) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
     const { type, data } = body as {
       type: string;
       data: {
@@ -30,14 +39,40 @@ export async function POST(req: NextRequest) {
         data.last_payment_status === "succeeded";
 
       if (paid) {
-        await (prisma as any).order.update({
+        const order = await (prisma as any).order.update({
           where: { id: orderId },
           data: {
             paymentStatus: "PAID",
             status: "PAID",
             paymentRef: data.id,
           },
+          include: {
+            items: true,
+            user: { select: { email: true, fullName: true } },
+          },
         });
+
+        const email = order.user?.email ?? order.guestEmail;
+        const name = order.user?.fullName ?? order.shippingFullName;
+        if (email) {
+          await sendOrderConfirmation(
+            { email, name },
+            {
+              orderNumber: order.orderNumber,
+              customerName: name,
+              items: order.items,
+              subtotal: order.subtotal,
+              shippingFee: order.shippingFee,
+              discount: order.discount,
+              total: order.total,
+              shippingFullName: order.shippingFullName,
+              shippingPhone: order.shippingPhone,
+              shippingCity: order.shippingCity,
+              shippingDistrict: order.shippingDistrict,
+              shippingStreet: order.shippingStreet,
+            }
+          ).catch((err) => console.error("[Brevo] confirmation email error:", err));
+        }
       }
     }
 

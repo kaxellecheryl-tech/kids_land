@@ -171,7 +171,7 @@ export default function CareersPage() {
                     </div>
                   </div>
                   <a
-                    href={`mailto:recrutement@kidsland.ci?subject=Candidature — ${title}`}
+                    href={`mailto:info@kidsland.africa?subject=Candidature — ${title}`}
                     className="hidden sm:inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-full text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors shrink-0"
                   >
                     <Send size={12} /> Postuler
@@ -191,7 +191,7 @@ export default function CareersPage() {
                     ))}
                   </div>
                   <a
-                    href={`mailto:recrutement@kidsland.ci?subject=Candidature — ${title}`}
+                    href={`mailto:info@kidsland.africa?subject=Candidature — ${title}`}
                     className="sm:hidden mt-4 inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-full text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors"
                   >
                     <Send size={12} /> Postuler
@@ -233,7 +233,7 @@ export default function CareersPage() {
                 lignes. Nous lisons toutes les candidatures.
               </p>
               <a
-                href="mailto:recrutement@kidsland.ci?subject=Candidature spontanée"
+                href="mailto:info@kidsland.africa?subject=Candidature spontanée"
                 className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors"
               >
                 <Send size={12} /> Envoyer ma candidature
@@ -256,7 +256,7 @@ export default function CareersPage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <a
-              href="mailto:recrutement@kidsland.ci"
+              href="mailto:info@kidsland.africa"
               className="inline-flex items-center justify-center gap-2 bg-brand-orange text-white px-8 py-4 rounded-full text-[13px] font-bold uppercase tracking-wide hover:-translate-y-0.5 transition-transform"
             >
               Écrire à l&apos;équipe RH <ArrowRight size={15} />

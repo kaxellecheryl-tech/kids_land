@@ -251,8 +251,8 @@ export default function PressPage() {
         </div>
         <p className="text-[12px] text-gray-400 mt-6">
           Les assets du kit presse sont disponibles sur demande. Écrivez-nous à{" "}
-          <a href="mailto:presse@kidsland.ci" className="text-brand-orange hover:underline font-medium">
-            presse@kidsland.ci
+          <a href="mailto:info@kidsland.africa" className="text-brand-orange hover:underline font-medium">
+            info@kidsland.africa
           </a>{" "}
           pour obtenir l&apos;accès complet.
         </p>
@@ -274,8 +274,8 @@ export default function PressPage() {
               <div className="space-y-2 mb-5">
                 <div className="text-[13px] text-gray-700">
                   <span className="font-semibold">Email :</span>{" "}
-                  <a href="mailto:presse@kidsland.ci" className="text-brand-orange hover:underline">
-                    presse@kidsland.ci
+                  <a href="mailto:info@kidsland.africa" className="text-brand-orange hover:underline">
+                    info@kidsland.africa
                   </a>
                 </div>
                 <div className="text-[13px] text-gray-700">
@@ -283,7 +283,7 @@ export default function PressPage() {
                 </div>
               </div>
               <a
-                href="mailto:presse@kidsland.ci"
+                href="mailto:info@kidsland.africa"
                 className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors"
               >
                 <Mail size={13} /> Contacter le service presse

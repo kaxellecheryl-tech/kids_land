@@ -17,6 +17,8 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [cguAccepted, setCguAccepted] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -25,6 +27,10 @@ function RegisterForm() {
     setError(null);
     if (password.length < 8) {
       setError("Le mot de passe doit contenir au moins 8 caractères.");
+      return;
+    }
+    if (!cguAccepted) {
+      setError("Vous devez accepter les CGV et la politique de confidentialité pour continuer.");
       return;
     }
     startTransition(async () => {
@@ -49,7 +55,7 @@ function RegisterForm() {
         setError("Erreur lors de la création du compte. Réessayez.");
         return;
       }
-      await createUserRecord({ id: data.user.id, email, fullName, phone });
+      await createUserRecord({ id: data.user.id, email, fullName, phone, marketingConsent });
       router.push(next);
       router.refresh();
     });
@@ -140,6 +146,43 @@ function RegisterForm() {
               </button>
             </div>
             <p className="text-[11px] text-gray-400 mt-1">Au moins 8 caractères.</p>
+          </div>
+
+          {/* Consentements */}
+          <div className="space-y-3 pt-1">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                required
+                checked={cguAccepted}
+                onChange={(e) => setCguAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black shrink-0"
+              />
+              <span className="text-[12px] text-gray-600 leading-relaxed">
+                J&apos;ai lu et j&apos;accepte les{" "}
+                <Link href="/legal/cgv" target="_blank" className="text-black font-semibold hover:text-brand-orange underline">
+                  Conditions Générales de Vente
+                </Link>{" "}
+                et la{" "}
+                <Link href="/legal/confidentialite" target="_blank" className="text-black font-semibold hover:text-brand-orange underline">
+                  Politique de confidentialité
+                </Link>{" "}
+                <span className="text-brand-orange">*</span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black shrink-0"
+              />
+              <span className="text-[12px] text-gray-500 leading-relaxed">
+                J&apos;accepte de recevoir les offres, nouveautés et actualités Kids Land par email.
+                Je peux me désabonner à tout moment.
+              </span>
+            </label>
           </div>
 
           <button

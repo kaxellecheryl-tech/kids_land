@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 // @ts-ignore: CSS module declarations are not available in this environment
 import "./globals.css";
 
@@ -48,7 +50,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${montserrat.variable} ${tropika.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
     </html>
   );
 }

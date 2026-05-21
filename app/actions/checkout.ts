@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createCheckoutSession } from "@/lib/wave";
 import { generateOrderNumber } from "@/lib/utils";
 import { incrementCouponUsage } from "./coupon";
+import { clearCart } from "./cart-sync";
 
 export type CheckoutItem = {
   productId: string;
@@ -108,6 +109,9 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
     if (input.couponCode) {
       await incrementCouponUsage(input.couponCode).catch(() => {});
     }
+
+    // Supprimer le panier DB pour stopper tout futur email d'abandon
+    await clearCart().catch(() => {});
 
     return { ok: true, orderNumber, paymentUrl: session.wave_launch_url };
   } catch (err) {

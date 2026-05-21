@@ -9,6 +9,7 @@ export async function createUserRecord(data: {
   email: string;
   fullName: string;
   phone: string;
+  marketingConsent: boolean;
 }) {
   await (prisma as any).user.upsert({
     where: { id: data.id },
@@ -18,6 +19,7 @@ export async function createUserRecord(data: {
       email: data.email,
       fullName: data.fullName,
       phone: data.phone,
+      marketingConsent: data.marketingConsent,
     },
   });
 }

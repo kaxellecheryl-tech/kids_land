@@ -125,10 +125,16 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-gray-100 pt-7 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            © {new Date().getFullYear()} Kids Land — Tous droits réservés
-          </span>
+        <div className="border-t border-gray-100 pt-7 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="text-xs text-gray-500">
+              © {new Date().getFullYear()} Kids Land — Tous droits réservés
+            </span>
+            <span className="hidden sm:inline text-gray-200">|</span>
+            <Link href="/legal/cgv" className="text-xs text-gray-400 hover:text-black transition-colors">CGV</Link>
+            <Link href="/legal/mentions-legales" className="text-xs text-gray-400 hover:text-black transition-colors">Mentions légales</Link>
+            <Link href="/legal/confidentialite" className="text-xs text-gray-400 hover:text-black transition-colors">Confidentialité</Link>
+          </div>
           <div className="flex gap-2">
             {[
               "#99C5FF",

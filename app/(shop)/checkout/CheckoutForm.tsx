@@ -462,8 +462,12 @@ export function CheckoutForm({
 
           <p className="text-[11px] text-gray-400 text-center leading-relaxed">
             En commandant, vous acceptez nos{" "}
-            <Link href="/help/returns" className="text-brand-orange hover:underline">
-              conditions de retour
+            <Link href="/legal/cgv" className="text-brand-orange hover:underline">
+              Conditions Générales de Vente
+            </Link>{" "}
+            et notre{" "}
+            <Link href="/legal/confidentialite" className="text-brand-orange hover:underline">
+              Politique de confidentialité
             </Link>.
           </p>
         </div>

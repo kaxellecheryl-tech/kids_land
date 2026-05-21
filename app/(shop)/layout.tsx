@@ -3,6 +3,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/shop/CartDrawer";
 import { AnnouncementBar } from "@/components/shop/AnnouncementBar";
+import { CartSyncProvider } from "@/components/shop/CartSyncProvider";
+import { WishlistSyncProvider } from "@/components/shop/WishlistSyncProvider";
 import { getActiveFeaturedCoupon } from "@/app/actions/coupon";
 
 export default async function ShopLayout({
@@ -34,6 +36,8 @@ export default async function ShopLayout({
       </main>
       <Footer />
       <CartDrawer />
+      <CartSyncProvider />
+      <WishlistSyncProvider />
     </>
   );
 }

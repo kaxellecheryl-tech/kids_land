@@ -40,10 +40,10 @@ const CHANNELS = [
   {
     Icon: Mail,
     label: "Email",
-    value: "contact@kidsland.ci",
+    value: "info@kidsland.africa",
     desc: "Réponse sous 24h",
     bg: "#fff3bb",
-    href: "mailto:contact@kidsland.ci",
+    href: "mailto:info@kidsland.africa",
     cta: "Envoyer un email",
     ctaBg: "#000000",
   },

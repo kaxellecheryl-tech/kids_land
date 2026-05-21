@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -47,7 +48,19 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
-    // TODO: vérifier le role ADMIN dans la table users
+    const serviceClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: dbUser } = await serviceClient
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (!dbUser || dbUser.role !== "ADMIN") {
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
