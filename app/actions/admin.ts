@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendOrderStatusUpdate } from "@/lib/brevo";
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -24,27 +23,36 @@ export async function updateOrderStatus(
 ): Promise<{ error?: string }> {
   try {
     await assertAdmin();
-    const order = await (prisma as any).order.update({
+    await (prisma as any).order.update({
       where: { id: orderId },
       data: { status },
-      include: { user: { select: { email: true, fullName: true } } },
     });
     revalidatePath("/admin/orders");
     revalidatePath(`/admin/orders/${orderId}`);
-
-    const email = order.user?.email ?? order.guestEmail;
-    const name = order.user?.fullName ?? order.shippingFullName;
-    if (email) {
-      sendOrderStatusUpdate({ email, name }, order.orderNumber, status).catch(
-        (err) => console.error("[Brevo] status email error:", err)
-      );
-    }
-
     return {};
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : "Erreur" };
   }
 }
+
+export async function markOrderAsPaid(
+  orderId: string,
+  paymentMethod: string
+): Promise<{ error?: string }> {
+  try {
+    await assertAdmin();
+    await (prisma as any).order.update({
+      where: { id: orderId },
+      data: { paymentStatus: "PAID", paymentMethod, status: "PAID" },
+    });
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${orderId}`);
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Erreur" };
+  }
+}
+
 
 export type VariantInput = {
   size: string;

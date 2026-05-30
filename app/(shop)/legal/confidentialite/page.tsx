@@ -84,8 +84,6 @@ export default function ConfidentialitePage() {
         <ul className="list-disc pl-5 space-y-1.5">
           <li><strong>Supabase</strong> — hébergement de la base de données (EU)</li>
           <li><strong>Vercel</strong> — hébergement du site web (USA)</li>
-          <li><strong>Wave</strong> — traitement des paiements</li>
-          <li><strong>Brevo</strong> — envoi d&apos;emails transactionnels et marketing</li>
         </ul>
         <p>
           Ces sous-traitants s&apos;engagent à traiter vos données conformément aux lois applicables

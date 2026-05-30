@@ -2,10 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { createCheckoutSession } from "@/lib/wave";
 import { generateOrderNumber } from "@/lib/utils";
 import { incrementCouponUsage } from "./coupon";
 import { clearCart } from "./cart-sync";
+
+const WHATSAPP_NUMBER = "2250777063646";
 
 export type CheckoutItem = {
   productId: string;
@@ -37,8 +38,44 @@ export type CheckoutInput = {
 };
 
 export type CheckoutResult =
-  | { ok: true; orderNumber: string; paymentUrl: string }
+  | { ok: true; orderNumber: string; whatsappUrl: string }
   | { ok: false; error: string };
+
+function buildWhatsAppUrl(orderNumber: string, input: CheckoutInput): string {
+  const lines: string[] = [
+    `Bonjour Kids Land 👋`,
+    `Nouvelle commande *${orderNumber}*`,
+    ``,
+    `🛍️ Articles :`,
+    ...input.items.map((item) => {
+      const variant = [item.size, item.color].filter(Boolean).join(" / ");
+      const label = variant ? `${item.name} — ${variant}` : item.name;
+      return `• ${label} (×${item.quantity}) — ${(item.unitPrice * item.quantity).toLocaleString("fr-FR")} F`;
+    }),
+    ``,
+    `📦 Livraison : ${input.shipping.fullName}`,
+    `📍 ${input.shipping.district}, ${input.shipping.city}`,
+    `📞 ${input.shipping.phone}`,
+  ];
+
+  if (input.shipping.street) lines.push(`🏠 ${input.shipping.street}`);
+  if (input.shipping.notes) lines.push(`📝 ${input.shipping.notes}`);
+
+  lines.push(``);
+  if (input.shippingFee > 0) {
+    lines.push(`Sous-total : ${input.subtotal.toLocaleString("fr-FR")} F`);
+    lines.push(`Livraison : ${input.shippingFee.toLocaleString("fr-FR")} F`);
+  }
+  if (input.discount > 0) {
+    lines.push(`Réduction : -${input.discount.toLocaleString("fr-FR")} F`);
+  }
+  lines.push(`💰 *Total à payer : ${input.total.toLocaleString("fr-FR")} F CFA*`);
+  lines.push(``);
+  lines.push(`Je souhaite finaliser mon paiement.`);
+
+  const message = lines.join("\n");
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
 
 export async function createOrder(input: CheckoutInput): Promise<CheckoutResult> {
   const supabase = await createClient();
@@ -50,10 +87,7 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
 
   if (!input.items.length) return { ok: false, error: "Votre panier est vide." };
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
   try {
-    // Numéro de commande unique
     const lastOrder = await (prisma as any).order.findFirst({
       orderBy: { createdAt: "desc" },
       select: { orderNumber: true },
@@ -63,14 +97,12 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
       : 0;
     const orderNumber = generateOrderNumber(lastSeq + 1);
 
-    // Création de la commande en base (PENDING en attendant le paiement Wave)
-    const order = await (prisma as any).order.create({
+    await (prisma as any).order.create({
       data: {
         orderNumber,
         userId: user.id,
         status: "PENDING",
         paymentStatus: "PENDING",
-        paymentMethod: "wave",
         shippingFullName: input.shipping.fullName,
         shippingPhone: input.shipping.phone,
         shippingCity: input.shipping.city,
@@ -97,31 +129,16 @@ export async function createOrder(input: CheckoutInput): Promise<CheckoutResult>
       },
     });
 
-    // Création de la session Wave
-    const session = await createCheckoutSession({
-      amount: input.total,
-      successUrl: `${appUrl}/checkout/success?order=${orderNumber}`,
-      errorUrl: `${appUrl}/checkout?error=payment_failed`,
-      // clientReference = order.id pour identifier la commande dans le webhook
-      clientReference: order.id,
-    });
-
     if (input.couponCode) {
       await incrementCouponUsage(input.couponCode).catch(() => {});
     }
 
-    // Supprimer le panier DB pour stopper tout futur email d'abandon
     await clearCart().catch(() => {});
 
-    return { ok: true, orderNumber, paymentUrl: session.wave_launch_url };
+    const whatsappUrl = buildWhatsAppUrl(orderNumber, input);
+    return { ok: true, orderNumber, whatsappUrl };
   } catch (err) {
     console.error("createOrder error:", err);
-    const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    return {
-      ok: false,
-      error: msg.includes("WAVE_API_KEY")
-        ? "Le paiement Wave n'est pas encore configuré. Contactez-nous."
-        : "Une erreur est survenue. Réessayez dans un instant.",
-    };
+    return { ok: false, error: "Une erreur est survenue. Réessayez dans un instant." };
   }
 }

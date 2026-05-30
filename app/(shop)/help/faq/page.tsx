@@ -248,7 +248,7 @@ export default function FaqPage() {
                 <p className="text-sm text-gray-500">Aucune question ne correspond à votre recherche.</p>
                 <p className="text-sm text-gray-400 mt-1">
                   Essayez un autre terme ou{" "}
-                  <a href="https://wa.me/2250000000000" className="text-brand-orange font-medium hover:underline">
+                  <a href="https://wa.me/2250777063646" className="text-brand-orange font-medium hover:underline">
                     contactez-nous directement
                   </a>.
                 </p>
@@ -332,13 +332,13 @@ export default function FaqPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <a
-                href="https://wa.me/2250000000000"
+                href="https://wa.me/2250777063646"
                 className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white px-7 py-3.5 rounded-full text-[13px] font-bold uppercase tracking-wide hover:-translate-y-0.5 transition-transform"
               >
                 <MessageCircle size={16} /> WhatsApp
               </a>
               <a
-                href="tel:+2250000000000"
+                href="tel:+2250777063646"
                 className="inline-flex items-center justify-center gap-2 bg-white text-black px-7 py-3.5 rounded-full text-[13px] font-bold uppercase tracking-wide hover:-translate-y-0.5 transition-transform"
               >
                 <Phone size={16} /> Appeler

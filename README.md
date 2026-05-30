@@ -1,6 +1,6 @@
 # Kids Land — Boutique e-commerce
 
-Plateforme e-commerce de vêtements et accessoires pour enfants, développée pour le marché ivoirien. Paiement mobile money Wave, emails automatisés via Brevo, stack Next.js 15 moderne.
+Plateforme e-commerce de vêtements et accessoires pour enfants, développée pour le marché ivoirien. Paiement via WhatsApp (Wave, Orange Money, Momo, Djamo), stack Next.js 15 moderne.
 
 ## Stack technique
 
@@ -11,8 +11,8 @@ Plateforme e-commerce de vêtements et accessoires pour enfants, développée po
 | Base de données | PostgreSQL via Supabase |
 | ORM | Prisma |
 | Auth | Supabase Auth |
-| Paiement | Wave Mobile Money |
-| Emails | Brevo (transactionnels + marketing) |
+| Paiement | WhatsApp (Wave / Orange Money / Momo / Djamo) |
+| Emails | — (à intégrer ultérieurement) |
 | State management | Zustand (panier + favoris) |
 | Hosting | Vercel |
 | Analytics | Vercel Analytics + Speed Insights |
@@ -32,10 +32,9 @@ Plateforme e-commerce de vêtements et accessoires pour enfants, développée po
 
 ### Tunnel d'achat
 - Checkout avec adresse de livraison (Abidjan / intérieur du pays)
-- Paiement Wave Mobile Money avec redirection sécurisée
-- Webhook Wave avec vérification de signature HMAC-SHA256
-- Email de confirmation de commande automatique (Brevo)
-- Page de succès post-paiement
+- Redirection WhatsApp avec récapitulatif de commande pré-rempli
+- Paiement manuel via Wave, Orange Money, MTN Momo ou Djamo
+- Page de confirmation post-commande
 
 ### Compte client
 - Inscription avec consentement CGV + opt-in marketing
@@ -43,17 +42,12 @@ Plateforme e-commerce de vêtements et accessoires pour enfants, développée po
 - Suivi de commandes
 - Page favoris
 
-### Emails automatisés (Brevo)
+### Paiement (flux WhatsApp)
 
-| Email | Déclencheur |
-|---|---|
-| Confirmation de commande | Paiement Wave validé (webhook) |
-| Mise à jour statut | Admin change le statut de la commande |
-| Panier abandonné | Panier non commandé après 1h (cron toutes les heures) |
-| Favoris oubliés | Wishlist inactive depuis 7 jours (cron quotidien à 9h) |
-| Rupture imminente | Produit favori ≤ 5 unités en stock (cron toutes les 6h) |
-
-> Les emails marketing (panier abandonné, favoris) ne sont envoyés qu'aux utilisateurs ayant coché l'opt-in à l'inscription.
+Le paiement se fait manuellement via WhatsApp :
+1. Le client valide sa commande → WhatsApp s'ouvre avec le récapitulatif pré-rempli
+2. Le client règle via Wave, Orange Money, MTN Momo ou Djamo
+3. L'admin confirme le paiement dans le dashboard (méthode + "Marquer comme payé")
 
 ### Admin
 - Dashboard avec statistiques (commandes, chiffre d'affaires, produits)
@@ -112,16 +106,10 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
 DATABASE_URL=postgresql://postgres.xxxxx:[PASSWORD]@aws-x-xx-x.pooler.supabase.com:6543/postgres
 DIRECT_URL=postgresql://postgres:[PASSWORD]@db.xxxxx.supabase.co:5432/postgres
 
-# Wave — https://wave.com/business → Paramètres → API
+# Wave (conservé pour intégration future)
 WAVE_API_KEY=
 WAVE_SECRET_KEY=
-WAVE_WEBHOOK_SECRET=   # Clé HMAC pour vérifier les webhooks Wave
-
-# Brevo — https://app.brevo.com → Paramètres → SMTP & API → API
-BREVO_API_KEY=xkeysib-...
-
-# Cron — secret arbitraire à générer : openssl rand -hex 32
-CRON_SECRET=
+WAVE_WEBHOOK_SECRET=
 
 # App
 NEXT_PUBLIC_APP_URL=https://www.kidsland.africa
@@ -217,34 +205,6 @@ kidsland/
 
 ---
 
-## Crons Vercel
-
-Configurés dans `vercel.json` et sécurisés par `Authorization: Bearer <CRON_SECRET>` :
-
-| Route | Fréquence | Action |
-|---|---|---|
-| `/api/cron/abandoned-cart` | Toutes les heures | Email panier abandonné depuis 1h–48h |
-| `/api/cron/wishlist-low-stock` | Toutes les 6h | Email si favori ≤ 5 unités en stock |
-| `/api/cron/wishlist-reminder` | Chaque jour à 9h | Email favoris inactifs depuis 7 jours |
-
----
-
-## Configuration Brevo comme SMTP Supabase
-
-Pour que les emails de confirmation d'inscription passent par Brevo :
-
-1. Aller dans **Supabase → Project Settings → Authentication → SMTP Settings**
-2. Activer **Enable Custom SMTP**
-3. Renseigner :
-   - Host : `smtp-relay.brevo.com`
-   - Port : `587`
-   - Username : ton email Brevo
-   - Password : ton mot de passe SMTP Brevo (Brevo → Paramètres → SMTP & API → SMTP)
-   - Sender email : `info@kidsland.africa`
-   - Sender name : `Kids Land`
-
----
-
 ## Passer un compte en ADMIN
 
 Exécuter directement en base via Supabase → SQL Editor :
@@ -261,7 +221,7 @@ UPDATE users SET role = 'ADMIN' WHERE email = 'ton@email.com';
 - [ ] Configurer `WAVE_API_KEY`, `WAVE_SECRET_KEY` dans `.env`
 - [ ] Générer `WAVE_WEBHOOK_SECRET` depuis le dashboard Wave → Webhooks et l'ajouter dans `.env`
 - [ ] Générer `CRON_SECRET` (`openssl rand -hex 32`) et l'ajouter dans Vercel → Environment Variables
-- [ ] Configurer le SMTP Brevo dans Supabase (voir section ci-dessus)
+- [x] Emails de confirmation désactivés dans Supabase (inscription directe)
 - [ ] Ajouter l'URL du webhook dans le dashboard Wave : `https://www.kidsland.africa/api/wave/webhook`
 - [x] `robots.ts` et `sitemap.ts` générés dynamiquement (App Router)
 - [x] Vercel Analytics + Speed Insights intégrés (`app/layout.tsx`)

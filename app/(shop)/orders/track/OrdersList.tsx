@@ -218,7 +218,7 @@ function OrderCard({ order }: { order: OrderRow }) {
               <span className="text-sm text-white/80">Un problème avec cette commande ?</span>
             </div>
             <a
-              href="https://wa.me/2250000000000"
+              href="https://wa.me/2250777063646"
               className="inline-flex items-center gap-1.5 bg-[#25D366] text-white px-4 py-2 rounded-full text-[12px] font-bold uppercase tracking-wide hover:-translate-y-0.5 transition-transform shrink-0"
             >
               <MessageCircle size={13} /> WhatsApp

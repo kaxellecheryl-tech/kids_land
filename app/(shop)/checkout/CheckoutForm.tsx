@@ -6,7 +6,7 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag, Shirt, MapPin, Phone, User, FileText,
-  Truck, RefreshCcw, AlertCircle, ChevronRight, Tag, X,
+  Truck, RefreshCcw, AlertCircle, ChevronRight, Tag, X, MessageCircle,
 } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
@@ -113,7 +113,8 @@ export function CheckoutForm({
         return;
       }
       clearCart();
-      router.push(result.paymentUrl);
+      window.open(result.whatsappUrl, "_blank");
+      router.push(`/checkout/success?order=${result.orderNumber}`);
     });
   }
 
@@ -416,22 +417,22 @@ export function CheckoutForm({
             </div>
           </div>
 
-          {/* Payment — Wave */}
+          {/* Payment — WhatsApp */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
-              Mode de paiement
+              Paiement
             </h2>
-            <div className="flex items-center gap-3 bg-[#0080FF]/8 border-2 border-[#0080FF] rounded-xl px-4 py-3.5">
-              <div className="w-8 h-8 rounded-lg bg-[#0080FF] flex items-center justify-center shrink-0">
-                <span className="text-white text-[10px] font-black">W</span>
+            <div className="flex items-center gap-3 bg-[#25D366]/10 border-2 border-[#25D366] rounded-xl px-4 py-3.5">
+              <div className="w-8 h-8 rounded-lg bg-[#25D366] flex items-center justify-center shrink-0">
+                <MessageCircle size={16} className="text-white" />
               </div>
               <div>
-                <p className="text-[13px] font-bold text-[#0080FF]">Wave</p>
-                <p className="text-[11px] text-gray-500">Mobile Money — Côte d&apos;Ivoire</p>
+                <p className="text-[13px] font-bold text-[#128C7E]">Via WhatsApp</p>
+                <p className="text-[11px] text-gray-500">Wave · Orange Money · Momo · Djamo</p>
               </div>
             </div>
-            <p className="text-[11px] text-gray-400 mt-3">
-              Vous serez redirigé vers Wave pour finaliser le paiement en toute sécurité.
+            <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+              Après validation, vous serez redirigé sur WhatsApp pour envoyer votre récapitulatif et convenir du paiement avec notre équipe.
             </p>
           </div>
 

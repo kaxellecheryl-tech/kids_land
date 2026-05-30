@@ -23,7 +23,7 @@ const CHANNELS = [
     value: "+225 00 00 00 00 00",
     desc: "Réponse en moins de 2h",
     bg: "#d8f5c0",
-    href: "https://wa.me/2250000000000",
+    href: "https://wa.me/2250777063646",
     cta: "Écrire sur WhatsApp",
     ctaBg: "#25D366",
   },
@@ -33,7 +33,7 @@ const CHANNELS = [
     value: "+225 00 00 00 00 00",
     desc: "Lun–Sam, 8h–19h",
     bg: "#99C5FF",
-    href: "tel:+2250000000000",
+    href: "tel:+2250777063646",
     cta: "Appeler",
     ctaBg: "#6D86DD",
   },
@@ -347,7 +347,7 @@ export default function ContactPage() {
 
                 <p className="text-[11px] text-gray-400 text-center leading-relaxed">
                   Réponse garantie sous 24h. Pour une urgence, privilégiez{" "}
-                  <a href="https://wa.me/2250000000000" className="text-brand-orange font-medium hover:underline">
+                  <a href="https://wa.me/2250777063646" className="text-brand-orange font-medium hover:underline">
                     WhatsApp
                   </a>.
                 </p>

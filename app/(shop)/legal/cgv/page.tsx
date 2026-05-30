@@ -74,12 +74,13 @@ export default function CGVPage() {
 
       <Section title="4. Paiement">
         <p>
-          Le paiement s&apos;effectue en ligne via <strong>Wave Mobile Money</strong>. Le montant est débité
-          au moment de la validation de la commande.
+          Le paiement s&apos;effectue via WhatsApp, après validation de la commande sur le Site.
+          Les moyens de paiement acceptés sont : <strong>Wave</strong>, <strong>Orange Money</strong>,{" "}
+          <strong>MTN Momo</strong> et <strong>Djamo</strong>. Le montant est réglé directement
+          entre le client et l&apos;équipe Kids Land avant l&apos;expédition de la commande.
         </p>
         <p>
-          Le Site ne stocke aucune donnée bancaire. Les transactions sont sécurisées par les systèmes
-          de paiement de Wave.
+          Le Site ne stocke aucune donnée bancaire ou de paiement.
         </p>
       </Section>
 

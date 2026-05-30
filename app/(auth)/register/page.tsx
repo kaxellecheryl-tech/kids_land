@@ -43,7 +43,8 @@ function RegisterForm() {
           emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.kidsland.africa"}/`,
         },
       });
-      if (signUpError) {
+      const smtpFailed = signUpError?.message === "Error sending confirmation email";
+      if (signUpError && !smtpFailed) {
         setError(
           signUpError.message === "User already registered"
             ? "Un compte existe déjà avec cet email."

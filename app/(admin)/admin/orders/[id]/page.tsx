@@ -155,7 +155,12 @@ export default async function OrderDetailPage({
 
           {/* Status update */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <StatusForm orderId={order.id} currentStatus={order.status} />
+            <StatusForm
+              orderId={order.id}
+              currentStatus={order.status}
+              currentPaymentStatus={order.paymentStatus}
+              currentPaymentMethod={order.paymentMethod}
+            />
           </div>
         </div>
 
