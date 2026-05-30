@@ -1,20 +1,20 @@
 import Link from "next/link";
 import {
-  ArrowLeft, RotateCcw, CheckCircle, XCircle, Package,
-  MessageCircle, Phone, Clock, ShieldCheck, Truck, AlertCircle,
+  ArrowLeft, RotateCcw, MessageCircle, Phone, Clock,
+  AlertCircle, CheckCircle, XCircle, Package, Truck,
 } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Retours",
-  description: "Politique de retours Kids Land — 30 jours pour changer d'avis, sans condition.",
+  description: "Politique de retours Kids Land — retour sous 10 jours uniquement en cas de défaut de l'article.",
 };
 
 const STEPS = [
   {
     Icon: MessageCircle,
     title: "Contactez-nous",
-    desc: "Signalez votre retour via WhatsApp ou par email en indiquant votre numéro de commande.",
+    desc: "Signalez le défaut via WhatsApp avec des photos claires de l'article et votre numéro de commande.",
   },
   {
     Icon: Package,
@@ -24,50 +24,46 @@ const STEPS = [
   {
     Icon: Truck,
     title: "Remise au livreur",
-    desc: "Un livreur passe récupérer l'article chez vous à l'heure convenue.",
+    desc: "Nous convenons ensemble d'un créneau pour que notre livreur récupère l'article chez vous.",
   },
   {
     Icon: CheckCircle,
-    title: "Remboursement",
-    desc: "Après vérification, votre remboursement est traité sous 3 à 5 jours ouvrés.",
+    title: "Échange",
+    desc: "Après vérification du défaut, nous vous envoyons un article de remplacement identique ou équivalent.",
   },
 ];
 
-const ACCEPTED: { label: string; ok: boolean }[] = [
-  { label: "Article non porté et non lavé",                          ok: true  },
-  { label: "Étiquettes d'origine toujours attachées",               ok: true  },
-  { label: "Emballage d'origine présent (ou équivalent)",           ok: true  },
-  { label: "Retour dans les 30 jours suivant la réception",         ok: true  },
-  { label: "Article porté, lavé ou abîmé",                          ok: false },
-  { label: "Sous-vêtements ou maillots de bain (hygiène)",          ok: false },
-  { label: "Article personnalisé ou sur commande spéciale",         ok: false },
-  { label: "Retour au-delà de 30 jours",                            ok: false },
+const CONDITIONS: { label: string; ok: boolean }[] = [
+  { label: "Article présentant un défaut de fabrication",             ok: true  },
+  { label: "Signalement dans les 10 jours suivant la réception",      ok: true  },
+  { label: "Photos du défaut fournies lors du signalement",           ok: true  },
+  { label: "Article non porté ou non lavé",                           ok: true  },
+  { label: "Changement d'avis ou mauvais choix de taille",           ok: false },
+  { label: "Article porté, lavé ou abîmé après réception",           ok: false },
+  { label: "Signalement au-delà de 10 jours",                        ok: false },
+  { label: "Demande de remboursement (aucun remboursement accordé)", ok: false },
 ];
 
 const FAQS = [
   {
-    q: "Les frais de retour sont-ils gratuits ?",
-    a: "Oui. La récupération à domicile est entièrement prise en charge par Kids Land, sans frais supplémentaires.",
-  },
-  {
-    q: "Sous quel délai suis-je remboursé ?",
-    a: "Le remboursement est effectué sous 3 à 5 jours ouvrés après réception et vérification de l'article retourné.",
-  },
-  {
-    q: "Puis-je échanger un article plutôt que le rembourser ?",
-    a: "Oui, nous proposons l'échange contre une autre taille ou un autre article de valeur équivalente, sous réserve de disponibilité.",
-  },
-  {
-    q: "Comment se passe le remboursement ?",
-    a: "Le remboursement est effectué via le même mode de paiement utilisé lors de la commande (Wave, Orange Money, MTN, carte).",
-  },
-  {
     q: "Que faire si j'ai reçu un article défectueux ?",
-    a: "Contactez-nous immédiatement avec des photos de l'article. Un remplacement ou un remboursement complet est accordé sans délai.",
+    a: "Contactez-nous immédiatement sur WhatsApp avec des photos du défaut et votre numéro de commande. Nous examinons la situation et procédons à un échange si le défaut est confirmé.",
   },
   {
-    q: "Puis-je retourner un article acheté en solde ?",
-    a: "Oui, les articles soldés bénéficient de la même politique de retour que les articles à prix plein.",
+    q: "Puis-je retourner un article si la taille ne convient pas ?",
+    a: "Non. Les retours ne sont acceptés qu'en cas de défaut de fabrication. Nous vous conseillons de consulter notre guide des tailles avant de commander.",
+  },
+  {
+    q: "Y a-t-il des remboursements ?",
+    a: "Non. Kids Land ne procède à aucun remboursement. En cas de défaut avéré, l'article est remplacé par un article identique ou équivalent.",
+  },
+  {
+    q: "Les frais de retour sont-ils à ma charge ?",
+    a: "Non. En cas de défaut confirmé, la récupération de l'article est prise en charge par Kids Land.",
+  },
+  {
+    q: "Quel délai pour signaler un problème ?",
+    a: "Vous disposez de 10 jours à compter de la réception de votre commande pour signaler tout défaut. Passé ce délai, aucun retour ne pourra être accepté.",
   },
 ];
 
@@ -75,7 +71,7 @@ export default function ReturnsPage() {
   return (
     <>
       {/* BANNER */}
-      <section className="pt-16 pb-12 px-6 bg-[#d8f5c0]">
+      <section className="pt-16 pb-12 px-6 bg-[#fff3bb]">
         <div className="container-shop">
           <Link
             href="/"
@@ -88,15 +84,15 @@ export default function ReturnsPage() {
               <div className="mb-3"><RotateCcw size={48} className="text-gray-700" /></div>
               <h1 className="text-5xl font-bold tracking-tight mb-2">Retours</h1>
               <p className="text-sm text-gray-700">
-                30 jours pour changer d&apos;avis — retour à domicile, sans frais
+                Retour accepté uniquement en cas de défaut de l&apos;article — sous 10 jours
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2 bg-white/60 rounded-2xl px-6 py-4">
               <Clock size={20} className="text-gray-600 shrink-0" />
               <div>
-                <div className="text-lg font-bold tracking-tight">30 jours</div>
+                <div className="text-lg font-bold tracking-tight">10 jours</div>
                 <div className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
-                  Délai de retour
+                  Délai de signalement
                 </div>
               </div>
             </div>
@@ -104,28 +100,21 @@ export default function ReturnsPage() {
         </div>
       </section>
 
-      {/* HIGHLIGHTS */}
-      <section className="container-shop py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {[
-            { Icon: RotateCcw,   bg: "#d8f5c0", title: "30 jours",       desc: "Pour changer d'avis sans justification" },
-            { Icon: Truck,       bg: "#99C5FF", title: "Gratuit",         desc: "Récupération à domicile offerte" },
-            { Icon: ShieldCheck, bg: "#fff3bb", title: "Remboursement",   desc: "Intégral sous 3–5 jours ouvrés" },
-          ].map(({ Icon, bg, title, desc }) => (
-            <div
-              key={title}
-              className="rounded-2xl p-6 flex items-center gap-4"
-              style={{ backgroundColor: bg }}
-            >
-              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center shrink-0">
-                <Icon size={22} className="text-gray-700" />
-              </div>
-              <div>
-                <div className="text-lg font-bold tracking-tight">{title}</div>
-                <div className="text-[13px] text-gray-600 mt-0.5">{desc}</div>
-              </div>
-            </div>
-          ))}
+      {/* ALERTE POLITIQUE */}
+      <section className="container-shop py-10">
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 px-8 py-6 flex items-start gap-4">
+          <AlertCircle size={22} className="text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[14px] font-bold text-amber-700 mb-1">
+              Politique de retour Kids Land
+            </p>
+            <p className="text-[13px] text-gray-600 leading-relaxed">
+              Kids Land accepte les retours <strong>uniquement en cas de défaut de fabrication</strong> de l&apos;article,
+              dans un délai de <strong>10 jours maximum</strong> après réception.
+              Aucun retour pour changement d&apos;avis ou mauvais choix de taille ne sera accepté.{" "}
+              <strong>Aucun remboursement</strong> n&apos;est accordé — les articles défectueux sont remplacés.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -134,16 +123,14 @@ export default function ReturnsPage() {
         <div className="container-shop">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Conditions de retour</h2>
           <p className="text-sm text-gray-500 mb-10">
-            Pour être accepté, l&apos;article retourné doit respecter les critères suivants.
+            Un retour est accepté uniquement si toutes les conditions suivantes sont réunies.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
-            {ACCEPTED.map(({ label, ok }) => (
+            {CONDITIONS.map(({ label, ok }) => (
               <div
                 key={label}
                 className={`flex items-start gap-3 rounded-xl border px-5 py-4 ${
-                  ok
-                    ? "bg-white border-gray-100"
-                    : "bg-red-50/50 border-red-100"
+                  ok ? "bg-white border-gray-100" : "bg-red-50/50 border-red-100"
                 }`}
               >
                 {ok ? (
@@ -162,9 +149,9 @@ export default function ReturnsPage() {
 
       {/* HOW IT WORKS */}
       <section className="container-shop py-16">
-        <h2 className="text-3xl font-bold tracking-tight mb-2">Comment retourner un article ?</h2>
+        <h2 className="text-3xl font-bold tracking-tight mb-2">Comment signaler un défaut ?</h2>
         <p className="text-sm text-gray-500 mb-10">
-          La procédure est simple et entièrement prise en charge.
+          La procédure est simple — contactez-nous directement sur WhatsApp.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {STEPS.map((step, i) => (
@@ -172,30 +159,13 @@ export default function ReturnsPage() {
               <div className="absolute top-4 right-5 text-[11px] font-bold text-gray-200 tabular-nums">
                 0{i + 1}
               </div>
-              <div className="w-11 h-11 rounded-xl bg-[#d8f5c0] flex items-center justify-center mb-4">
+              <div className="w-11 h-11 rounded-xl bg-[#fff3bb] flex items-center justify-center mb-4">
                 <step.Icon size={20} className="text-gray-700" />
               </div>
               <h3 className="text-[14px] font-bold mb-1.5">{step.title}</h3>
               <p className="text-[13px] text-gray-500 leading-relaxed">{step.desc}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ALERT DEFECTUEUX */}
-      <section className="container-shop pb-10">
-        <div className="rounded-2xl bg-brand-orange/10 border border-brand-orange/20 px-8 py-6 flex items-start gap-4">
-          <AlertCircle size={22} className="text-brand-orange shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[14px] font-bold text-brand-orange mb-1">
-              Article défectueux ou erreur de commande ?
-            </p>
-            <p className="text-[13px] text-gray-600 leading-relaxed">
-              Si vous avez reçu un article endommagé ou différent de votre commande, contactez-nous
-              immédiatement avec des photos. Nous procédons à un remplacement ou un remboursement
-              complet <strong>sans délai et sans condition</strong>.
-            </p>
-          </div>
         </div>
       </section>
 
@@ -225,10 +195,10 @@ export default function ReturnsPage() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="text-center lg:text-left">
               <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
-                Besoin d&apos;aide pour un retour ?
+                Vous avez reçu un article défectueux ?
               </h2>
               <p className="text-sm text-white/60">
-                Notre équipe vous accompagne du lundi au samedi, de 8h à 19h.
+                Contactez-nous immédiatement avec des photos — nous trouvons une solution rapidement.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">

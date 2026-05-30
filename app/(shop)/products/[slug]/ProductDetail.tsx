@@ -83,11 +83,18 @@ export function ProductDetail({ product }: { product: ProductFull }) {
   const allSizes = [...sizeGroups.keys()];
   const hasColors = product.variants.some((v) => v.color);
 
-  const colorsForSize: { color: string; stock: number }[] = selectedSize
+  // Aggregate all unique colors across all sizes (with total stock)
+  const allColorMap = new Map<string, number>();
+  for (const v of product.variants) {
+    if (v.color) allColorMap.set(v.color, (allColorMap.get(v.color) ?? 0) + v.stock);
+  }
+
+  // Show only colors available for selected size; otherwise all unique colors
+  const colorsToDisplay: { color: string; stock: number }[] = selectedSize
     ? (sizeGroups.get(selectedSize) ?? [])
         .filter((v) => v.color)
         .map((v) => ({ color: v.color!, stock: v.stock }))
-    : [];
+    : [...allColorMap.entries()].map(([color, stock]) => ({ color, stock }));
 
   const selectedVariant =
     selectedSize !== null
@@ -112,10 +119,21 @@ export function ProductDetail({ product }: { product: ProductFull }) {
   function handleSizeClick(size: string) {
     setSelectedSize(size);
     const variants = sizeGroups.get(size) ?? [];
-    if (variants.length === 1 || !hasColors) {
-      setSelectedColor(variants[0]?.color ?? null);
-    } else {
+    if (!hasColors || variants.length === 0) {
       setSelectedColor(null);
+    } else if (variants.length === 1) {
+      const color = variants[0].color ?? null;
+      setSelectedColor(color);
+      if (color) navigateToColorImage(color);
+    } else {
+      // Preserve the selected color if it's still available in the new size
+      const colorStillAvailable =
+        selectedColor != null && variants.some((v) => v.color === selectedColor);
+      if (!colorStillAvailable) {
+        setSelectedColor(null);
+      } else if (selectedColor) {
+        navigateToColorImage(selectedColor);
+      }
     }
   }
 
@@ -188,8 +206,7 @@ export function ProductDetail({ product }: { product: ProductFull }) {
   const nextImg = () => goTo((activeImg + 1) % images.length);
 
   // ── Couleur → image ───────────────────────────────────────────
-  function handleColorClick(color: string) {
-    setSelectedColor(color);
+  function navigateToColorImage(color: string) {
     // 1. Cherche par alt (ex: alt = "rouge", "bleu"…)
     const byAlt = images.findIndex(
       (img) => img.alt?.toLowerCase().includes(color.toLowerCase())
@@ -198,6 +215,11 @@ export function ProductDetail({ product }: { product: ProductFull }) {
     // 2. Fallback : même index que la couleur dans la liste ordonnée
     const colorIdx = allColors.indexOf(color);
     if (colorIdx >= 0 && colorIdx < images.length) goTo(colorIdx);
+  }
+
+  function handleColorClick(color: string) {
+    setSelectedColor(color);
+    navigateToColorImage(color);
   }
 
   return (
@@ -401,8 +423,8 @@ export function ProductDetail({ product }: { product: ProductFull }) {
           </div>
         )}
 
-        {/* Color selector */}
-        {hasColors && colorsForSize.length > 0 && (
+        {/* Color selector — masqué si une seule couleur disponible (auto-sélectionnée) */}
+        {hasColors && colorsToDisplay.length > 1 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[12px] font-bold uppercase tracking-widest text-gray-600">
@@ -416,7 +438,7 @@ export function ProductDetail({ product }: { product: ProductFull }) {
               )}
             </div>
             <div className="flex flex-wrap gap-2.5">
-              {colorsForSize.map(({ color, stock }) => (
+              {colorsToDisplay.map(({ color, stock }) => (
                 <button
                   key={color}
                   type="button"

@@ -131,7 +131,7 @@ export function Header() {
             <Link
               href={accountHref}
               aria-label={accountLabel}
-              className="relative hidden sm:flex w-10 h-10 rounded-xl border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
+              className="relative flex w-10 h-10 rounded-xl border border-gray-200 bg-white items-center justify-center hover:border-brand-orange hover:bg-orange-50 transition-colors"
             >
               {mounted && authUser ? (
                 <span className="w-7 h-7 rounded-lg bg-brand-orange text-white text-[11px] font-black flex items-center justify-center">

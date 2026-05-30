@@ -48,11 +48,7 @@ const FOOTER_COLS = [
   {
     title: "À propos",
     links: [
-      { href: "/about", label: "Notre histoire" },
       { href: "/brands", label: "Nos marques" },
-      { href: "/about/values", label: "Nos engagements" },
-      { href: "/careers", label: "Recrutement" },
-      { href: "/press", label: "Presse" },
     ],
   },
 ];
