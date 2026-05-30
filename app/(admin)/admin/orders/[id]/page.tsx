@@ -1,9 +1,21 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Phone, User, Package } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, User, Package, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { StatusForm } from "./StatusForm";
+
+function toWhatsAppPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("225")) return digits;
+  if (digits.startsWith("0")) return "225" + digits.slice(1);
+  return "225" + digits;
+}
+
+function buildAdminWhatsAppUrl(phone: string, name: string, orderNumber: string): string {
+  const msg = `Bonjour ${name} 👋\nNous avons bien reçu votre commande *${orderNumber}*.\nPouvez-vous confirmer votre moyen de paiement ? (Wave, Orange Money, Momo ou Djamo)\nMerci — Kids Land`;
+  return `https://wa.me/${toWhatsAppPhone(phone)}?text=${encodeURIComponent(msg)}`;
+}
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "En attente",
@@ -173,7 +185,7 @@ export default async function OrderDetailPage({
               <h2 className="text-[13px] font-bold">Client</h2>
             </div>
             {order.user ? (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <p className="text-[13px] font-semibold">
                   {order.user.fullName ?? "—"}
                 </p>
@@ -181,6 +193,18 @@ export default async function OrderDetailPage({
                 {order.user.phone && (
                   <p className="text-[12px] text-gray-500">{order.user.phone}</p>
                 )}
+                <a
+                  href={buildAdminWhatsAppUrl(
+                    order.user.phone ?? order.shippingPhone,
+                    order.user.fullName ?? order.shippingFullName,
+                    order.orderNumber
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-1 text-[11px] font-bold text-[#25D366] hover:text-[#128C7E] transition-colors"
+                >
+                  <MessageCircle size={12} /> Contacter via WhatsApp
+                </a>
               </div>
             ) : (
               <p className="text-[13px] text-gray-400">Client non connecté</p>

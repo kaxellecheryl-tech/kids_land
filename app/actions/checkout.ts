@@ -8,6 +8,13 @@ import { clearCart } from "./cart-sync";
 
 const WHATSAPP_NUMBER = "2250777063646";
 
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("225")) return digits;
+  if (digits.startsWith("0")) return "225" + digits.slice(1);
+  return "225" + digits;
+}
+
 export type CheckoutItem = {
   productId: string;
   variantId?: string;
@@ -55,7 +62,7 @@ function buildWhatsAppUrl(orderNumber: string, input: CheckoutInput): string {
     ``,
     `📦 Livraison : ${input.shipping.fullName}`,
     `📍 ${input.shipping.district}, ${input.shipping.city}`,
-    `📞 ${input.shipping.phone}`,
+    `📞 ${input.shipping.phone} (WhatsApp : wa.me/${formatPhone(input.shipping.phone)})`,
   ];
 
   if (input.shipping.street) lines.push(`🏠 ${input.shipping.street}`);
