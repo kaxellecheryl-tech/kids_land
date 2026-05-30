@@ -2,18 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { generateOrderNumber } from "@/lib/utils";
+import { generateOrderNumber, formatPhone } from "@/lib/utils";
 import { incrementCouponUsage } from "./coupon";
 import { clearCart } from "./cart-sync";
 
 const WHATSAPP_NUMBER = "2250777063646";
-
-function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("225")) return digits;
-  if (digits.startsWith("0")) return "225" + digits.slice(1);
-  return "225" + digits;
-}
 
 export type CheckoutItem = {
   productId: string;

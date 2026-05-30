@@ -172,6 +172,9 @@ export default async function OrderDetailPage({
               currentStatus={order.status}
               currentPaymentStatus={order.paymentStatus}
               currentPaymentMethod={order.paymentMethod}
+              clientPhone={order.shippingPhone}
+              clientName={order.user?.fullName ?? order.shippingFullName}
+              orderNumber={order.orderNumber}
             />
           </div>
         </div>

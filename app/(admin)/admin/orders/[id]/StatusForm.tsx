@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { RefreshCcw, ChevronDown, CreditCard, CheckCircle } from "lucide-react";
 import { updateOrderStatus, markOrderAsPaid } from "@/app/actions/admin";
+import { buildClientWhatsAppUrl } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 const STATUS_OPTIONS = [
@@ -28,11 +29,17 @@ export function StatusForm({
   currentStatus,
   currentPaymentStatus,
   currentPaymentMethod,
+  clientPhone,
+  clientName,
+  orderNumber,
 }: {
   orderId: string;
   currentStatus: string;
   currentPaymentStatus: string;
   currentPaymentMethod?: string | null;
+  clientPhone: string;
+  clientName: string;
+  orderNumber: string;
 }) {
   const [status, setStatus] = useState(currentStatus);
   const [paymentMethod, setPaymentMethod] = useState(currentPaymentMethod ?? "wave");
@@ -43,6 +50,11 @@ export function StatusForm({
 
   const isPaid = currentPaymentStatus === "PAID";
 
+  function openClientWhatsApp(newStatus: string) {
+    const url = buildClientWhatsAppUrl(clientPhone, clientName, orderNumber, newStatus);
+    if (url) window.open(url, "_blank");
+  }
+
   function handleSave() {
     if (status === currentStatus) return;
     setError(null);
@@ -52,6 +64,7 @@ export function StatusForm({
         setError(result.error);
         setStatus(currentStatus);
       } else {
+        openClientWhatsApp(status);
         router.refresh();
       }
     });
@@ -61,8 +74,12 @@ export function StatusForm({
     setError(null);
     startPaying(async () => {
       const result = await markOrderAsPaid(orderId, paymentMethod);
-      if (result.error) setError(result.error);
-      else router.refresh();
+      if (result.error) {
+        setError(result.error);
+      } else {
+        openClientWhatsApp("PAID");
+        router.refresh();
+      }
     });
   }
 
@@ -73,7 +90,7 @@ export function StatusForm({
         <label className="block text-[11px] font-black uppercase tracking-widest text-gray-400">
           Statut de la commande
         </label>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
             <select
               value={status}
@@ -94,9 +111,10 @@ export function StatusForm({
             className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl text-[12px] font-bold uppercase tracking-wide hover:bg-brand-orange transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isPending && <RefreshCcw size={12} className="animate-spin" />}
-            Enregistrer
+            Enregistrer & notifier
           </button>
         </div>
+        <p className="text-[11px] text-gray-400">WhatsApp s&apos;ouvrira automatiquement pour notifier le client.</p>
       </div>
 
       {/* Paiement */}
@@ -130,7 +148,7 @@ export function StatusForm({
               className="flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-xl text-[12px] font-bold uppercase tracking-wide hover:bg-green-700 transition-colors disabled:opacity-40"
             >
               {isPaying ? <RefreshCcw size={12} className="animate-spin" /> : <CreditCard size={13} />}
-              Marquer comme payé
+              Marquer payé & notifier
             </button>
           </div>
         )}

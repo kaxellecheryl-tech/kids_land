@@ -54,6 +54,34 @@ export function formatAge(months: number): string {
  * Un variant sans priceOverride utilise le basePrice.
  * Retourne undefined si tous les variants ont le même prix que basePrice.
  */
+export function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("225")) return digits;
+  if (digits.startsWith("0")) return "225" + digits.slice(1);
+  return "225" + digits;
+}
+
+const WA_STATUS_MESSAGES: Record<string, (name: string, orderNumber: string) => string> = {
+  PAID:       (n, o) => `Bonjour ${n} 👋\nVotre paiement pour la commande *${o}* a bien été confirmé ✅\nNous préparons votre colis avec soin !`,
+  PROCESSING: (n, o) => `Bonjour ${n} 👋\nVotre commande *${o}* est en cours de préparation 📦\nNous vous prévenons dès l'expédition !`,
+  SHIPPED:    (n, o) => `Bonjour ${n} 👋\nVotre commande *${o}* est en route 🚚\nNotre livreur va vous contacter pour convenir de la livraison.`,
+  DELIVERED:  (n, o) => `Bonjour ${n} 👋\nVotre commande *${o}* a bien été livrée 🎉\nMerci pour votre confiance — Kids Land`,
+  CANCELLED:  (n, o) => `Bonjour ${n} 👋\nVotre commande *${o}* a été annulée.\nContactez-nous si vous avez des questions : wa.me/2250777063646`,
+  REFUNDED:   (n, o) => `Bonjour ${n} 👋\nLe remboursement de votre commande *${o}* a été effectué.\nMerci pour votre confiance — Kids Land`,
+};
+
+export function buildClientWhatsAppUrl(
+  phone: string,
+  clientName: string,
+  orderNumber: string,
+  status: string
+): string | null {
+  const msgFn = WA_STATUS_MESSAGES[status];
+  if (!msgFn) return null;
+  const msg = msgFn(clientName, orderNumber);
+  return `https://wa.me/${formatPhone(phone)}?text=${encodeURIComponent(msg)}`;
+}
+
 export function computeMinPrice(
   basePrice: number,
   variants: { priceOverride: number | null }[]
