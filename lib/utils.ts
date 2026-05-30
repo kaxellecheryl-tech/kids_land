@@ -57,8 +57,7 @@ export function formatAge(months: number): string {
 export function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("225")) return digits;
-  if (digits.startsWith("0")) return "225" + digits.slice(1);
-  return "225" + digits;
+  return "225" + digits; // conserve le 0 initial : 0777063646 → 2250777063646
 }
 
 const WA_STATUS_MESSAGES: Record<string, (name: string, orderNumber: string) => string> = {

@@ -135,6 +135,14 @@ export function Footer() {
             <Link href="/legal/mentions-legales" className="text-xs text-gray-400 hover:text-black transition-colors">Mentions légales</Link>
             <Link href="/legal/confidentialite" className="text-xs text-gray-400 hover:text-black transition-colors">Confidentialité</Link>
           </div>
+          <a
+            href="https://www.linkedin.com/in/axelle-cheryl-kongoue"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-400 hover:text-black transition-colors"
+          >
+            Site réalisé par Axelle Cheryl Kongoué
+          </a>
           <div className="flex gap-2">
             {[
               "#99C5FF",

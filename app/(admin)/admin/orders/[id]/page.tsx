@@ -8,7 +8,6 @@ import { StatusForm } from "./StatusForm";
 function toWhatsAppPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("225")) return digits;
-  if (digits.startsWith("0")) return "225" + digits.slice(1);
   return "225" + digits;
 }
 
