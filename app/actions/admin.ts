@@ -270,6 +270,7 @@ export async function deleteCategory(id: string): Promise<{ error?: string }> {
 export type BrandInput = {
   name: string;
   slug: string;
+  description?: string;
   logoUrl?: string;
 };
 
@@ -282,6 +283,7 @@ export async function createBrand(
       data: {
         name: data.name,
         slug: data.slug,
+        description: data.description?.trim() || null,
         logoUrl: data.logoUrl || null,
       },
     });
@@ -304,6 +306,7 @@ export async function updateBrand(
       data: {
         name: data.name,
         slug: data.slug,
+        description: data.description?.trim() || null,
         logoUrl: data.logoUrl || null,
       },
     });

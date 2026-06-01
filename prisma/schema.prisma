@@ -73,11 +73,12 @@ model Category {
 }
 
 model Brand {
-  id        String    @id @default(uuid())
-  slug      String    @unique
-  name      String
-  logoUrl   String?
-  createdAt DateTime  @default(now())
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  name        String
+  description String?   @db.Text
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
 
   products Product[]
 

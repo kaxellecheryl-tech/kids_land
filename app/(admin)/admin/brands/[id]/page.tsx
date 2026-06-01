@@ -51,6 +51,7 @@ export default async function EditBrandPage({
           id: brand.id,
           name: brand.name,
           slug: brand.slug,
+          description: brand.description,
           logoUrl: brand.logoUrl,
         }}
       />

@@ -7,7 +7,7 @@ import { createBrand, updateBrand, deleteBrand, type BrandInput } from "@/app/ac
 import { slugify } from "@/lib/utils";
 
 type Props = {
-  initial?: { id: string; name: string; slug: string; logoUrl?: string | null };
+  initial?: { id: string; name: string; slug: string; description?: string | null; logoUrl?: string | null };
 };
 
 export function BrandForm({ initial }: Props) {
@@ -19,6 +19,7 @@ export function BrandForm({ initial }: Props) {
 
   const [name, setName] = useState(initial?.name ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
   const [logoUrl, setLogoUrl] = useState(initial?.logoUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
@@ -68,6 +69,7 @@ export function BrandForm({ initial }: Props) {
     const data: BrandInput = {
       name: name.trim(),
       slug: slug.trim(),
+      description: description.trim() || undefined,
       logoUrl: logoUrl.trim() || undefined,
     };
 
@@ -141,6 +143,17 @@ export function BrandForm({ initial }: Props) {
           <p className="text-[11px] text-gray-400 mt-1">
             Généré automatiquement depuis le nom. Modifier avec précaution.
           </p>
+        </div>
+
+        <div>
+          <label className={labelClass}>Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Courte présentation de la marque…"
+            rows={3}
+            className={`${fieldClass} resize-none`}
+          />
         </div>
       </section>
 
