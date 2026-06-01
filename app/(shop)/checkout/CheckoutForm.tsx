@@ -22,7 +22,7 @@ const CITIES_CI = [
 ];
 
 function shippingFee(zone: "abidjan" | "interieur", subtotal: number): number {
-  if (subtotal >= 25000) return 0;
+  if (subtotal >= 30000) return 0;
   return zone === "abidjan" ? 1500 : 3500;
 }
 
@@ -208,7 +208,7 @@ export function CheckoutForm({
                     {z === "abidjan" ? "Abidjan" : "Intérieur du pays"}
                   </div>
                   <div className={cn("text-[12px]", zone === z ? "text-white/60" : "text-gray-400")}>
-                    {subtotal >= 25000 ? "Livraison offerte" : z === "abidjan" ? "1 500 F" : "3 500 F"}
+                    {subtotal >= 30000 ? "Livraison offerte" : z === "abidjan" ? "1 500 F" : "3 500 F"}
                   </div>
                 </button>
               ))}
@@ -349,10 +349,10 @@ export function CheckoutForm({
                   )}
                 </span>
               </div>
-              {subtotal < 25000 && (
+              {subtotal < 30000 && (
                 <p className="text-[11px] text-gray-400">
-                  Livraison offerte dès {formatPrice(25000)}
-                  {" "}(encore {formatPrice(25000 - subtotal)})
+                  Livraison offerte dès {formatPrice(30000)}
+                  {" "}(encore {formatPrice(30000 - subtotal)})
                 </p>
               )}
               {discount > 0 && (

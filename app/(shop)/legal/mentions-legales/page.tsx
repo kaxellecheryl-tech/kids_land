@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED = "21 mai 2026";
+const UPDATED = "1er juin 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -36,14 +36,13 @@ export default function MentionsLegalesPage() {
 
       <Section title="1. Éditeur du site">
         <Row label="Dénomination" value="Kids Land" />
-        <Row label="Forme juridique" value="[FORME JURIDIQUE À COMPLÉTER]" />
-        <Row label="Capital social" value="[CAPITAL À COMPLÉTER]" />
-        <Row label="Siège social" value="[ADRESSE DU SIÈGE À COMPLÉTER], Abidjan, Côte d'Ivoire" />
-        <Row label="Numéro RCCM" value="[NUMÉRO RCCM À COMPLÉTER]" />
-        <Row label="Numéro contribuable" value="[NUMÉRO À COMPLÉTER]" />
-        <Row label="Responsable de publication" value="[NOM DU RESPONSABLE À COMPLÉTER]" />
+        <Row label="Activité" value="Vente en ligne de vêtements et accessoires pour enfants" />
+        <Row label="Pays d'activité" value="Côte d'Ivoire" />
         <Row label="Email de contact" value="info@kidsland.africa" />
-        <Row label="Téléphone" value="[NUMÉRO DE TÉLÉPHONE À COMPLÉTER]" />
+        <p className="mt-3 text-[13px] text-gray-500 italic">
+          Kids Land est une boutique en ligne. Une mise à jour de ces mentions
+          sera effectuée lors de l&apos;immatriculation officielle de la structure.
+        </p>
       </Section>
 
       <Section title="2. Hébergement">

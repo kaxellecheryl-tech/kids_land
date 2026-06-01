@@ -50,7 +50,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Quels sont les frais de livraison ?",
-        a: "Abidjan : 1 500 F CFA. Intérieur : 3 500 F CFA. La livraison est offerte pour toute commande à partir de 25 000 F CFA.",
+        a: "Abidjan : 1 500 F CFA. Intérieur : 3 500 F CFA. La livraison est offerte pour toute commande à partir de 30 000 F CFA.",
       },
       {
         q: "Livrez-vous le week-end ?",

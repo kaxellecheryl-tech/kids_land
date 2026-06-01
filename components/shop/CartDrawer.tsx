@@ -7,7 +7,7 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/utils";
 
-const FREE_SHIPPING_THRESHOLD = 25000;
+const FREE_SHIPPING_THRESHOLD = 30000;
 
 export function CartDrawer() {
   const { items, isOpen, close, updateQuantity, removeItem, getSubtotal } =

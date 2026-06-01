@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED = "21 mai 2026";
+const UPDATED = "1er juin 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

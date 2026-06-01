@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED = "21 mai 2026";
+const UPDATED = "1er juin 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -90,7 +90,7 @@ export default function CGVPage() {
           actuellement en Côte d&apos;Ivoire.
         </p>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Abidjan</strong> : 24 à 48 heures ouvrées — 1 500 FCFA (offerte dès 25 000 FCFA)</li>
+          <li><strong>Abidjan</strong> : 24 à 48 heures ouvrées — 1 500 FCFA (offerte dès 30 000 FCFA)</li>
           <li><strong>Intérieur du pays</strong> : 2 à 4 jours ouvrés — 3 500 FCFA</li>
         </ul>
         <p>
@@ -103,23 +103,26 @@ export default function CGVPage() {
         </p>
       </Section>
 
-      <Section title="6. Retours et remboursements">
+      <Section title="6. Retours et échanges">
         <p>
-          Vous disposez d&apos;un délai de <strong>30 jours</strong> à compter de la réception de votre commande
-          pour nous retourner un article, sans avoir à justifier votre décision.
+          Kids Land accepte les retours uniquement en cas de <strong>défaut avéré de l&apos;article</strong>
+          (défaut de fabrication, article endommagé à la réception). Les retours pour convenance personnelle
+          (changement d&apos;avis, mauvaise taille) ne sont pas acceptés.
         </p>
         <p>
-          Les articles retournés doivent être dans leur état d&apos;origine : non portés, non lavés, avec
-          étiquettes. Les frais de retour sont pris en charge par Kids Land.
+          Vous disposez d&apos;un délai de <strong>10 jours</strong> à compter de la réception de votre commande
+          pour signaler un défaut et retourner l&apos;article concerné. Passé ce délai, aucune réclamation
+          ne pourra être prise en compte.
         </p>
         <p>
-          Le remboursement est effectué dans un délai de 5 à 10 jours ouvrés après réception et vérification
-          du retour, par le même moyen de paiement que celui utilisé lors de la commande.
+          En cas de retour accepté, Kids Land procédera au <strong>remplacement de l&apos;article défectueux</strong>
+          par un article identique ou équivalent. Aucun remboursement en espèces ou par virement n&apos;est prévu.
         </p>
         <p>
-          Consultez notre{" "}
-          <Link href="/help/returns" className="text-brand-orange hover:underline">politique de retour complète</Link>{" "}
-          pour plus de détails.
+          Pour initier un retour, contactez-nous via{" "}
+          <a href="mailto:info@kidsland.africa" className="text-brand-orange hover:underline">info@kidsland.africa</a>{" "}
+          ou consultez notre{" "}
+          <Link href="/help/returns" className="text-brand-orange hover:underline">page retours</Link>.
         </p>
       </Section>
 
